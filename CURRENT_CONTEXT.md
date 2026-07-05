@@ -1,0 +1,125 @@
+# CURRENT CONTEXT — "Ask Danielle" / Personal AI Clone
+
+> Session notes so this work can be picked up on any machine. This file is
+> auto-read at the start of Claude Code sessions (see CLAUDE.md global rules).
+
+- **Project:** Build a "clone of Danielle" — an AI resource clients (Schubaum,
+  Rosanna, others) can talk to when they can't reach Danielle directly. It
+  answers the way she would, grounded in her real materials, and escalates
+  anything uncertain to the real Danielle instead of guessing.
+- **Repo / branch:** `lprds/lprds.github.io` on `claude/personal-ai-clone-uoeskx`
+- **Last updated:** 2026-07-05
+- **Status:** Front-end MVP built + pushed. Waiting on 3 decisions from Danielle
+  before standing up the backend ("brain").
+
+---
+
+## Where things stand
+
+### Built & pushed (on branch `claude/personal-ai-clone-uoeskx`)
+- **`ask.html`** — branded (LPR red) "Ask Danielle" chat page. Mobile-friendly,
+  starter questions, honest "Danielle's AI assistant" framing, and the
+  **"🔖 Flagged for Danielle"** escalation UI already wired in. Runs in a
+  friendly "almost ready" preview mode until `BACKEND_URL` is set at the top of
+  the file.
+- **`CLONE_PLAN.md`** — full architecture + safety design + status checklist.
+
+### The 3 decisions still needed from Danielle
+1. **Identity** — How should it introduce itself?
+   *Recommended: "Danielle's AI assistant, in her voice"* (honest it's AI, still
+   sounds like her, protects her legally) — vs. fully indistinguishable from her.
+2. **Interface** — Where do clients reach it?
+   *Recommended: a private chat link* — vs. it drafts email replies she approves
+   — vs. both (start with chat, add email later).
+3. **Knowledge sources** — What should it learn from? (multi-select)
+   Fathom call recordings · Gmail · ClickUp docs · Google Drive. More = smarter
+   and more "her."
+
+### Next build step (after decisions)
+- Stand up the secure **backend / "brain"**: a Cloudflare Worker *or* Supabase
+  Edge Function (both already connected) that holds the Claude API key, retrieves
+  relevant knowledge, answers in Danielle's voice, and returns an `escalate` flag.
+- Build knowledge ingestion from the chosen sources → searchable store.
+- Tune the "voice of Danielle" system prompt + escalation threshold.
+- Build the escalation queue (where flagged questions land for Danielle).
+- Add private-link / access control.
+- Test with real past questions before sharing the link.
+- **API key:** added straight into backend secrets — never pasted in chat
+  (per CLAUDE.md rules).
+
+### Open blocker to watch
+- One MCP connector still needs authorization (showed as needing sign-in).
+  Not blocking yet; authorize via claude.ai connector settings or `/mcp` in an
+  interactive session if we hit it.
+
+### The core safety principle (Danielle's top priority: fewest mistakes)
+It only asserts when genuinely echoing what Danielle has actually said/written.
+When unsure — or on money / contract / legal questions — it does NOT guess; it
+tells the client "let me make sure Danielle sees this one" and queues the
+question for her. Every unknown becomes a quick question for the real Danielle
+instead of a wrong answer. All conversations logged & reviewable.
+
+---
+
+## Full chat transcript
+
+### Danielle
+> i really need to figure out how to clone myself, um, i don't know even what
+> that means right now well i do know what that means right now i need to clone
+> myself because i need to have more than one me answering the questions that
+> shoe bomb has that rosanna has that my clients have i, uh, don't have enough
+> time to answer all this stuff every week um you see how many meetings i have by
+> the fathom records and my zoom records and, um, it's just not enough time for
+> all the clients so i need to figure out how to clone myself so that, um, I can
+> give these people, uh, a resource that, um, will give the exact same answers as
+> me to all the questions that they have. Um, and it needs to be solid and, you
+> know, I know that I can personally make mistakes. Anybody can. So, um, we wanna
+> try and figure out how to make the least amount of mistakes and give the least
+> amount of of advice that's not as Yeah. Anyway, so, um, you know what I mean?
+> So this is what this is what, um, I just... this is what I need to do, and I I
+> need you to help me do it, like, with agents, with, um, with skills, with
+> something that can connect... that I can connect to the outside world with some
+> sort of interface for, um, Ruthanne and Schubaum and my clients to interact
+> with when they can't speak to me directly face to face. And, um, it has to seem
+> like it's coming from me. So, I don't know. This is this is gonna be
+> interesting. I'll say that.
+
+### Claude
+Reflected back the goal: a "you" clients can talk to that answers the way
+Danielle would, knows what she knows, and doesn't hand out advice she wouldn't
+stand behind. Explained the honest shape of the build in three parts:
+1. **It learns from the real you** — Fathom calls, emails, docs (grounded in her
+   actual answers, not generic AI).
+2. **It answers in her voice through an interface clients can reach** — simplest
+   is a private chat link, branded like LPR.
+3. **The anti-bad-advice guardrail** — when unsure it stops and says "let me make
+   sure Danielle sees this one," dropping the question into a list for her.
+
+Noted the site is currently a static placeholder (can't safely hold the "brain"
+alone) but Cloudflare + Supabase are already connected, which host the secure
+part. Then posed the 3 decisions (identity / interface / knowledge sources).
+[An interactive question prompt was attempted but the session went
+non-interactive and connected tools briefly dropped, so the questions were
+restated in plain text.]
+
+### Claude (continued — after building)
+Proceeded on recommended defaults to make concrete progress: built `ask.html`
+(chat front-end) and `CLONE_PLAN.md`, committed and pushed to the branch.
+Summarized what was built, re-explained the safety net, and restated the 3
+decisions plus the next build step (stand up the backend once decisions land).
+
+### Danielle
+> Can you log this including the full chat to the session notes so I can pick it
+> up on my computer?
+
+### Claude
+Wrote this `CURRENT_CONTEXT.md` (auto-read at session start), committed, and
+pushed to the branch so it's available on her computer.
+
+---
+
+## How to resume on your computer
+1. Pull the branch: `git fetch origin && git checkout claude/personal-ai-clone-uoeskx`
+2. Open `ask.html` in a browser to see the chat page (preview mode).
+3. Read `CLONE_PLAN.md` for the full plan, and this file for status.
+4. Answer the 3 decisions above → next step is standing up the backend.
