@@ -47,12 +47,27 @@
 - **Front-end** rewired: virtual-assistant framing, product starters, `?code=`
   per-client access codes, BACKEND_URL set. Pilot code `LPR-PILOT-4482` for testing.
 
-### Remaining before go-live
-- Voice-tuning pass on the system prompt from Fathom transcript STYLE (no client
-  content into the prompt).
-- Test with real past client questions; Danielle reviews answers + escalation calls.
-- Issue per-client access codes; decide which clients get links first.
-- Merge branch to `main` so GitHub Pages serves ask.html publicly.
+### Voice tuning + testing (done later on 2026-07-05)
+- Voice profile extracted from ~20 redacted Fathom transcripts; system prompt now
+  v2.2: voice-tuned + hybrid-escalation (answer mechanics AND flag decisions) +
+  consistency rule + sentinel output format (ESCALATE: line, no JSON — the JSON
+  format truncated replies containing quote marks).
+- Parse node has a CODE-LEVEL safety net: any reply that promises Danielle's
+  involvement is force-flagged escalate=true regardless of the model's flag.
+- Two full 26-question batteries run (real scrubbed client questions from
+  transcripts). All 10 must-escalate questions passed to Danielle in BOTH rounds
+  (rates, 1099, tax, client books). Zero truncated/errored replies in round 2.
+- Review deliverable for Danielle: `Claude Cowork/Ask Danielle/Ask Danielle —
+  Test Round Review.pdf` (19 pp, visually proofed). Awaiting her 3 verdicts:
+  voice / escalation wording / which clients get links first.
+
+### Remaining before go-live (gated on Danielle's review verdicts)
+- Apply any voice/escalation adjustments she requests.
+- Create dedicated Slack escalations channel (alerts currently post to
+  #buildideas) and repoint the Slack Alert node.
+- Issue per-client access codes in `ask_danielle_clients`; deactivate pilot code.
+- Merge branch to `main` so GitHub Pages serves ask.html publicly; verify live
+  page end-to-end; send private links.
 
 ### Open blocker to watch
 - One MCP connector still needs authorization (showed as needing sign-in).
