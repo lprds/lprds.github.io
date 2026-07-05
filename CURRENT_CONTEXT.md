@@ -8,9 +8,11 @@
   answers the way she would, grounded in her real materials, and escalates
   anything uncertain to the real Danielle instead of guessing.
 - **Repo / branch:** `lprds/lprds.github.io` on `claude/personal-ai-clone-uoeskx`
-- **Last updated:** 2026-07-05
-- **Status:** Front-end MVP built + pushed. Waiting on 3 decisions from Danielle
-  before standing up the backend ("brain").
+- **Last updated:** 2026-07-05 (second session — local machine)
+- **Status:** Danielle answered the 3 decisions. Backend ("brain") built as an n8n
+  webhook workflow on the Railway instance; front-end rewired to it with per-client
+  access codes. Next: voice-tuning from Fathom transcripts, real-question testing,
+  then go-live (merge to main + send private links).
 
 ---
 
@@ -24,28 +26,33 @@
   the file.
 - **`CLONE_PLAN.md`** — full architecture + safety design + status checklist.
 
-### The 3 decisions still needed from Danielle
-1. **Identity** — How should it introduce itself?
-   *Recommended: "Danielle's AI assistant, in her voice"* (honest it's AI, still
-   sounds like her, protects her legally) — vs. fully indistinguishable from her.
-2. **Interface** — Where do clients reach it?
-   *Recommended: a private chat link* — vs. it drafts email replies she approves
-   — vs. both (start with chat, add email later).
-3. **Knowledge sources** — What should it learn from? (multi-select)
-   Fathom call recordings · Gmail · ClickUp docs · Google Drive. More = smarter
-   and more "her."
+### The 3 decisions — ANSWERED by Danielle 2026-07-05
+1. **Identity** — introduces itself as **Danielle's virtual assistant**: answers
+   questions directly, and passes anything unresolved to Danielle personally.
+2. **Interface** — private chat link (Danielle: "what I said for one answers this").
+3. **Knowledge** — tone from Fathom transcripts; substance = deep product expertise
+   in the client tech stack: Sage, QBO, QBDT Pro & Enterprise, ADP, QuickBooks Time,
+   Paychex, Xero, plus full Microsoft 365 and Google Workspace. Delivered via
+   Claude's product knowledge (not a hand-scraped corpus). Client-specific records
+   deliberately stay OUT of the knowledge layer — those questions always escalate.
 
-### Next build step (after decisions)
-- Stand up the secure **backend / "brain"**: a Cloudflare Worker *or* Supabase
-  Edge Function (both already connected) that holds the Claude API key, retrieves
-  relevant knowledge, answers in Danielle's voice, and returns an `escalate` flag.
-- Build knowledge ingestion from the chosen sources → searchable store.
-- Tune the "voice of Danielle" system prompt + escalation threshold.
-- Build the escalation queue (where flagged questions land for Danielle).
-- Add private-link / access control.
-- Test with real past questions before sharing the link.
-- **API key:** added straight into backend secrets — never pasted in chat
-  (per CLAUDE.md rules).
+### Built this session (2026-07-05, local)
+- **Backend**: n8n workflow "Ask Danielle — Client Chat Backend" on the Railway
+  instance (webhook path `/webhook/ask-danielle`). Chosen over Cloudflare/Supabase
+  because n8n already holds the Anthropic credential (zero new key handling) and
+  escalations reuse the LPR Slack notification path. Flow: validate → access-code
+  check (`ask_danielle_clients` data table) → Claude (claude-sonnet-4-6, escalation
+  rules in system prompt) → truncation-tolerant parse → log (`ask_danielle_log`) →
+  escalation queue (`ask_danielle_escalations`) + Slack ping → respond.
+- **Front-end** rewired: virtual-assistant framing, product starters, `?code=`
+  per-client access codes, BACKEND_URL set. Pilot code `LPR-PILOT-4482` for testing.
+
+### Remaining before go-live
+- Voice-tuning pass on the system prompt from Fathom transcript STYLE (no client
+  content into the prompt).
+- Test with real past client questions; Danielle reviews answers + escalation calls.
+- Issue per-client access codes; decide which clients get links first.
+- Merge branch to `main` so GitHub Pages serves ask.html publicly.
 
 ### Open blocker to watch
 - One MCP connector still needs authorization (showed as needing sign-in).

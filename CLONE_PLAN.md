@@ -13,20 +13,25 @@ guessing** — so it makes the fewest possible mistakes.
    A branded chat page you share a private link to. Already built (this branch).
    Static, hosted on GitHub Pages. Talks to the backend below.
 
-2. **The brain** — a secure backend (not built yet; needs your OK)
-   A Cloudflare Worker *or* Supabase Edge Function that:
-   - holds the Claude API key (a static site can't do this safely),
-   - retrieves the most relevant pieces of *your* knowledge for each question,
-   - asks Claude to answer **in your voice, using only what it found**,
-   - returns a confidence signal so low-confidence answers get flagged, not sent as fact.
-   You already have **Cloudflare and Supabase connected**, so this is a short step.
+2. **The brain** — an n8n webhook workflow on the Railway instance
+   *(Decided 2026-07-05 — chosen over Cloudflare Worker / Supabase Edge Function because
+   n8n already holds a working Anthropic credential — no new API-key handling — and
+   escalations ride the existing LPR Slack notification path.)*
+   Workflow "Ask Danielle — Client Chat Backend":
+   - validates the client's private access code (n8n data table),
+   - asks Claude (claude-sonnet-4-6) to answer as Danielle's **virtual assistant**,
+   - returns `{reply, escalate}` — uncertain/sensitive questions are never guessed,
+   - logs every exchange; escalations also land in a queue table + Slack ping to Danielle.
 
-3. **The memory** — your knowledge base
-   Your real materials, converted into searchable form the brain pulls from:
-   - Fathom meeting recordings/transcripts *(how you actually explain things)*
-   - Past client emails (Gmail)
-   - ClickUp docs & notes
-   - Google Drive documents
+3. **The knowledge** *(decided 2026-07-05)*
+   - **Tone** comes from Danielle's Fathom transcripts (voice-tuning pass — next step).
+   - **Substance** is deep product expertise in the client tech stack: QBO, QBDT Pro &
+     Enterprise, QuickBooks Time, Sage, Xero, ADP, Paychex, Microsoft 365, Google
+     Workspace — delivered via Claude's product knowledge (+ live vendor-doc lookup
+     later if currency becomes an issue), NOT a hand-built corpus.
+   - **Client-specific records stay out of the knowledge layer entirely** — questions
+     about a client's own books/amounts/deadlines always escalate to Danielle. This is
+     deliberate: it eliminates cross-client PII/data-leak risk by design.
 
 ---
 
@@ -46,26 +51,33 @@ guessing** — so it makes the fewest possible mistakes.
 
 ## Status
 
-- [x] Chat front-end (`ask.html`) — branded, mobile-friendly, with the "flagged for
-      Danielle" escalation UI already wired in.
-- [ ] Decide identity framing, primary channel, and knowledge sources *(3 questions
-      posed to Danielle — recommended defaults assumed for now: AI-in-your-voice, private
-      chat link, all four sources).*
-- [ ] Stand up the secure backend (Cloudflare Worker or Supabase Edge Function).
-- [ ] Add the Claude API key to the backend (Danielle provides once; never pasted in chat).
-- [ ] Build knowledge ingestion from the chosen sources → searchable store.
-- [ ] Tune the "voice of Danielle" system prompt + the escalation threshold.
-- [ ] Build the escalation queue (where flagged questions land for Danielle).
-- [ ] Private-link / access control so only invited clients can use it.
-- [ ] Test with a handful of real past questions before sharing the link.
+- [x] Chat front-end (`ask.html`) — branded, mobile-friendly, escalation UI wired in.
+- [x] Decisions from Danielle (2026-07-05): **identity** = "Danielle's virtual assistant"
+      (answers directly, passes unresolved questions to her); **channel** = private chat
+      link (implied by identity answer); **knowledge** = Fathom-derived tone + deep
+      product expertise (QBO / QBDT Pro & Enterprise / QB Time / Sage / Xero / ADP /
+      Paychex / MS 365 / Google Workspace).
+- [x] Backend platform decided: n8n webhook workflow on Railway (reuses existing
+      Anthropic credential — no new API-key handling needed anywhere).
+- [x] Front-end rewired: virtual-assistant framing, product-question starters,
+      `?code=` access-code links, `BACKEND_URL` pointed at the n8n webhook.
+- [ ] Backend workflow built + activated + tested (in progress 2026-07-05).
+- [ ] Voice-tuning pass: refine the system prompt's tone section from real Fathom
+      transcript excerpts (style only — no client content into the prompt).
+- [ ] Per-client access codes issued (data table `ask_danielle_clients`); pilot code
+      exists for testing.
+- [ ] Test with a handful of real past client questions before sharing any link.
+- [ ] Go-live: merge branch to `main` so GitHub Pages serves `ask.html`, then send
+      private links to Schubaum / Rosanna.
 
 ## What I need from Danielle to move to the next step
 
-1. Answers to the three questions (identity / channel / knowledge sources).
-2. A go-ahead to create the backend (Cloudflare Worker vs Supabase — I'll recommend one).
-3. A Claude API key added to the backend's secrets when we get there (not in chat).
+1. Nothing blocking — build is proceeding on her 2026-07-05 answers.
+2. Before go-live: her pass on test answers (does it sound like her, does it escalate
+   the right things), and which clients get links first.
 
 ---
 
-*The chat page runs in a friendly "almost ready" preview mode until the backend URL is
-filled in at the top of `ask.html`.*
+*Access control: each client gets `https://lprds.github.io/ask.html?code=<their-code>`.
+Codes live in the n8n data table `ask_danielle_clients` and can be deactivated any time.
+The backend rejects requests without a valid, active code — a bare link does nothing.*
