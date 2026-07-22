@@ -270,7 +270,7 @@
       Responses come from Danielle's virtual assistant and may not reflect her most current
       advice. Questions about your books, taxes, contracts, or anything with legal or financial
       weight are passed to Danielle to answer personally.
-      <span style="opacity:0.6">&nbsp;v8</span>
+      <span style="opacity:0.6">&nbsp;v9</span>
     </footer>
   </div>
 
@@ -337,7 +337,8 @@
       const esc = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+        .replace(/>/g, "&gt;")
+        .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
       const lines = esc.split("\n");
       const out = [];
       let i = 0;
@@ -364,7 +365,6 @@
         }
       }
       return out
-        .map((seg) => (seg.startsWith("<table>") ? seg : seg.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")))
         .join("\n")
         .replace(/\n(<table>)/g, "$1")
         .replace(/(<\/table>)\n/g, "$1");
