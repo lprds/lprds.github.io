@@ -170,6 +170,51 @@
     .typing span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 0.9; } }
 
+    .img-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0.75rem;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bot-bubble);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .img-chip[hidden] { display: none; }
+    .img-chip img { height: 34px; border-radius: 6px; display: block; }
+    .img-chip button {
+      margin-left: auto;
+      border: none;
+      background: none;
+      color: var(--lpr-red);
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .bubble img.shot {
+      display: block;
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: 8px;
+      margin-bottom: 0.4rem;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    button.attach {
+      background: #fff;
+      color: var(--lpr-red);
+      border: 1px solid var(--lpr-red);
+      border-radius: 12px;
+      padding: 0 0.9rem;
+      height: 44px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    button.attach:hover { background: var(--lpr-red); color: #fff; }
+
     form.composer {
       border-top: 1px solid var(--border);
       padding: 0.75rem;
@@ -262,15 +307,22 @@
       </div>
     </div>
 
+    <div class="img-chip" id="imgChip" hidden>
+      <img id="imgChipThumb" alt="" />
+      <span>Screenshot attached</span>
+      <button type="button" id="imgChipRemove" aria-label="Remove screenshot">&times;</button>
+    </div>
     <form class="composer" id="composer">
-      <textarea id="input" rows="1" placeholder="Type your question…" autocomplete="off"></textarea>
+      <textarea id="input" rows="1" placeholder="Type your question, or paste a screenshot…" autocomplete="off"></textarea>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+      <button class="attach" id="attachBtn" type="button">Attach</button>
       <button class="send" id="send" type="submit">Send</button>
     </form>
     <footer class="legal">
       Responses come from Danielle's virtual assistant and may not reflect her most current
       advice. Questions about your books, taxes, contracts, or anything with legal or financial
       weight are passed to Danielle to answer personally.
-      <span style="opacity:0.6">&nbsp;v9</span>
+      <span style="opacity:0.6">&nbsp;v10</span>
     </footer>
   </div>
 
@@ -302,6 +354,73 @@
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
     const history = [];
+    let pendingImage = null; // {data, media_type, url}
+
+    function clearPendingImage() {
+      if (pendingImage && pendingImage.url) URL.revokeObjectURL(pendingImage.url);
+      pendingImage = null;
+      const chip = document.getElementById("imgChip");
+      if (chip) chip.hidden = true;
+    }
+
+    function setPendingImage(data, mediaType, blob) {
+      if (pendingImage && pendingImage.url) URL.revokeObjectURL(pendingImage.url);
+      const url = URL.createObjectURL(blob);
+      pendingImage = { data: data, media_type: mediaType, url: url };
+      const chip = document.getElementById("imgChip");
+      document.getElementById("imgChipThumb").src = url;
+      chip.hidden = false;
+      input.focus();
+    }
+
+    function processImageFile(file) {
+      if (!file || file.type.indexOf("image/") !== 0) return;
+      const img = new Image();
+      const srcUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        const maxDim = 1800;
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (w > maxDim || h > maxDim) {
+          const scale = maxDim / Math.max(w, h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(srcUrl);
+          if (!blob) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            const dataUrl = String(reader.result);
+            const b64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
+            setPendingImage(b64, "image/jpeg", blob);
+          };
+          reader.readAsDataURL(blob);
+        }, "image/jpeg", 0.9);
+      };
+      img.src = srcUrl;
+    }
+
+    document.getElementById("attachBtn").addEventListener("click", () => {
+      document.getElementById("fileInput").click();
+    });
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      processImageFile(e.target.files[0]);
+      e.target.value = "";
+    });
+    document.getElementById("imgChipRemove").addEventListener("click", clearPendingImage);
+    document.addEventListener("paste", (e) => {
+      const items = (e.clipboardData || {}).items || [];
+      for (const it of items) {
+        if (it.type && it.type.indexOf("image/") === 0) {
+          processImageFile(it.getAsFile());
+          e.preventDefault();
+          break;
+        }
+      }
+    });
     const transcript = [];   // clean copy for export (no control lines)
     let isInternal = false;  // set from the backend; download is for Danielle's workers only
 
@@ -388,7 +507,13 @@
       } else if (who === "bot") {
         bubble.innerHTML = renderMarkdown(text);
       } else {
-        bubble.textContent = text;
+        if (opts.imgUrl) {
+          const shot = document.createElement("img");
+          shot.className = "shot";
+          shot.src = opts.imgUrl;
+          bubble.appendChild(shot);
+        }
+        bubble.appendChild(document.createTextNode(text));
       }
       row.appendChild(bubble);
       messagesEl.appendChild(row);
@@ -426,14 +551,18 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const text = input.value.trim();
-      if (!text) return;
-      addMessage(text, "user");
-      history.push({ role: "user", content: text });
-      transcript.push({ who: "You", text: text });
+      if (!text && !pendingImage) return;
+      const sentImage = pendingImage;
+      addMessage(text || "(screenshot)", "user", { imgUrl: sentImage ? sentImage.url : null });
+      history.push({ role: "user", content: text || "Please look at this screenshot." });
+      transcript.push({ who: "You", text: (text || "(screenshot)") + (sentImage ? " [screenshot attached]" : "") });
       input.value = "";
       input.style.height = "auto";
       input.focus();
       sendBtn.disabled = true;
+      const chip = document.getElementById("imgChip");
+      if (chip) chip.hidden = true;
+      pendingImage = null;
       showTyping();
 
       try {
@@ -448,10 +577,18 @@
           return;
         }
 
+        const outgoing = history.map((m) => ({ role: m.role, content: m.content }));
+        if (sentImage) {
+          outgoing[outgoing.length - 1] = {
+            role: "user",
+            content: history[history.length - 1].content,
+            image: { data: sentImage.data, media_type: sentImage.media_type },
+          };
+        }
         const res = await fetch(BACKEND_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: ACCESS_CODE, messages: history }),
+          body: JSON.stringify({ code: ACCESS_CODE, messages: outgoing }),
         });
         if (!res.ok) throw new Error("Backend error " + res.status);
         const data = await res.json();
