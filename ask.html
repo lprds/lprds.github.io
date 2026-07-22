@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ask Danielle — La Piedra Roja</title>
+  <title>Ask Danielle | LPR Business Services</title>
   <style>
     :root {
       --lpr-red: #c0392b;
@@ -179,23 +179,23 @@
       <div class="avatar" aria-hidden="true">DS</div>
       <div class="titles">
         <h1>Ask Danielle</h1>
-        <div class="sub">Danielle Stone · La Piedra Roja Business Services</div>
+        <div class="sub">Danielle Stone · LPR Business Services</div>
       </div>
     </header>
 
     <div class="disclosure">
-      This is Danielle's virtual assistant. It can answer your questions directly — and anything
-      you two can't resolve, it passes on to Danielle personally.
+      This is Danielle's virtual assistant. It can answer your questions directly, and anything
+      you two can't resolve it passes on to Danielle personally.
     </div>
 
     <div class="messages" id="messages" aria-live="polite">
       <div class="empty" id="empty">
-        <h2>Hi, I'm Danielle's virtual assistant 👋</h2>
+        <h2>Hi, I'm Danielle's virtual assistant</h2>
         <p>
-          Ask me the kinds of questions you'd normally bring to Danielle — especially
-          how-to questions about QuickBooks, Sage, Xero, ADP, Paychex, Microsoft 365, or
-          Google Workspace. If it's something Danielle should handle personally, I'll
-          pass your question straight to her.
+          Ask me the kinds of questions you'd normally bring to Danielle, especially
+          how-to questions about QuickBooks, Sage 100 Contractor, Xero, Bill.com, ADP,
+          Paychex, Microsoft 365, or Google Workspace. If it's something Danielle should
+          handle personally, I'll pass your question straight to her.
         </p>
         <div class="starters" id="starters">
           <button class="starter" type="button">How do I fix an unreconciled transaction in QBO?</button>
@@ -272,7 +272,7 @@
       if (opts.flag) {
         const head = document.createElement("div");
         head.className = "flag-head";
-        head.innerHTML = "🔖 Flagged for Danielle";
+        head.textContent = "Flagged for Danielle";
         bubble.appendChild(head);
         bubble.appendChild(document.createTextNode(text));
       } else {
@@ -334,14 +334,14 @@
         // Backend contract:
         //   { reply: string, escalate?: boolean }
         // escalate=true means the assistant wasn't confident and has queued the
-        // question for the real Danielle — render it as a flagged message.
-        const reply = data.reply || "Sorry, I didn't catch that — could you rephrase?";
+        // question for the real Danielle, so render it as a flagged message.
+        const reply = data.reply || "Sorry, I didn't catch that. Could you rephrase?";
         addMessage(reply, "bot", { flag: !!data.escalate });
         history.push({ role: "assistant", content: reply });
       } catch (err) {
         hideTyping();
         addMessage(
-          "Something went wrong on my end. I've noted it — please try again in a moment, " +
+          "Something went wrong on my end. Please try again in a moment, " +
           "or reach out to Danielle directly if it's urgent.",
           "bot"
         );
