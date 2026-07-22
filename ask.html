@@ -245,7 +245,15 @@
     // Each client gets a private link with their own access code, e.g.
     //   https://lprds.github.io/ask.html?code=XXXX-XXXX
     // The backend rejects requests without a valid, active code.
-    const ACCESS_CODE = new URLSearchParams(location.search).get("code") || "";
+    const PARAMS = new URLSearchParams(location.search);
+    const ACCESS_CODE = PARAMS.get("code") || "";
+    // Per-person links carry the person's first name for the on-page greeting.
+    // Display only; the backend resolves the real name from the access code.
+    const USER_NAME = (PARAMS.get("name") || "").slice(0, 40);
+    if (USER_NAME) {
+      const h2 = document.querySelector("#empty h2");
+      if (h2) h2.textContent = "Hi " + USER_NAME + ", I'm Danielle's virtual assistant";
+    }
 
     const messagesEl = document.getElementById("messages");
     const emptyEl = document.getElementById("empty");
