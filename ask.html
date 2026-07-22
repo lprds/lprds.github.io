@@ -3,27 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <title>Ask Danielle | LPR Business Services</title>
   <style>
     :root {
-      --lpr-red: #c0392b;
-      --lpr-red-dark: #a5321f;
-      --bg: #f5f5f5;
+      --lpr-red: #b31b24;
+      --lpr-red-dark: #7a1a1a;
+      --lpr-deep: #5b0e0e;
+      --lpr-gold: #d4a843;
+      --bg: #fdf6f0;
       --card: #ffffff;
-      --text: #222;
-      --muted: #667085;
-      --border: #e6e6e6;
-      --bot-bubble: #f4f5f7;
-      --user-bubble: #c0392b;
-      --flag-bg: #fff8e6;
-      --flag-border: #f0d48a;
-      --flag-text: #7a5b00;
+      --text: #2c2c2c;
+      --muted: #6b6560;
+      --border: #ece2d8;
+      --bot-bubble: #faf4ec;
+      --user-bubble: #b31b24;
+      --flag-bg: #fdf8ec;
+      --flag-border: #d4a843;
+      --flag-text: #6d5312;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       display: flex;
@@ -36,30 +41,39 @@
       display: flex;
       flex-direction: column;
       background: var(--card);
+      box-shadow: 0 0 40px rgba(91, 14, 14, 0.08);
     }
     header.top {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--border);
+      padding: 0.95rem 1.25rem;
+      background: linear-gradient(120deg, var(--lpr-red-dark) 0%, var(--lpr-deep) 100%);
       display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.9rem;
     }
-    .avatar {
-      width: 44px; height: 44px;
-      border-radius: 50%;
-      background: var(--lpr-red);
-      color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 1.05rem;
+    .emblem {
+      height: 46px; width: auto;
       flex-shrink: 0;
+      display: block;
     }
-    .top .titles { line-height: 1.25; }
-    .top h1 { font-size: 1.05rem; margin: 0; color: var(--text); }
-    .top .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+    .top .titles { line-height: 1.2; }
+    .top h1 {
+      font-family: "Space Grotesk", "Inter", sans-serif;
+      font-size: 1.2rem;
+      letter-spacing: 0.01em;
+      margin: 0;
+      color: #fff;
+    }
+    .top .sub {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 0.82rem;
+      color: #f3ded2;
+      margin-top: 2px;
+    }
 
     .disclosure {
-      background: #fbfbfc;
+      background: var(--bg);
       border-bottom: 1px solid var(--border);
+      border-top: 3px solid var(--lpr-gold);
       color: var(--muted);
       font-size: 0.76rem;
       padding: 0.55rem 1.25rem;
@@ -80,7 +94,7 @@
       color: var(--muted);
       max-width: 420px;
     }
-    .empty h2 { color: var(--text); font-size: 1.15rem; margin: 0 0 0.4rem; }
+    .empty h2 { font-family: "Space Grotesk", sans-serif; color: var(--lpr-red-dark); font-size: 1.2rem; margin: 0 0 0.4rem; }
     .empty p { font-size: 0.9rem; line-height: 1.5; margin: 0 0 1rem; }
     .starters { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
     .starter {
@@ -93,7 +107,7 @@
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
     }
-    .starter:hover { background: var(--bot-bubble); border-color: #d5d5d5; }
+    .starter:hover { background: var(--bot-bubble); border-color: var(--lpr-gold); }
     .starter:focus-visible { outline: 2px solid var(--lpr-red); outline-offset: 2px; }
 
     .row { display: flex; }
@@ -107,7 +121,7 @@
       white-space: pre-wrap;
       word-wrap: break-word;
     }
-    .row.bot .bubble { background: var(--bot-bubble); border-bottom-left-radius: 4px; }
+    .row.bot .bubble { background: var(--bot-bubble); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
     .row.user .bubble { background: var(--user-bubble); color: #fff; border-bottom-right-radius: 4px; }
 
     .bubble.flag {
@@ -167,19 +181,20 @@
 
     button.download {
       margin-left: auto;
-      background: #fff;
-      color: var(--lpr-red);
-      border: 1px solid var(--lpr-red);
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.65);
       border-radius: 10px;
       padding: 0.4rem 0.8rem;
+      font-family: "Inter", sans-serif;
       font-size: 0.78rem;
       font-weight: 600;
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
       flex-shrink: 0;
     }
-    button.download:hover { background: var(--lpr-red); color: #fff; }
-    button.download:focus-visible { outline: 2px solid var(--lpr-red); outline-offset: 2px; }
+    button.download:hover { background: #fff; color: var(--lpr-red-dark); }
+    button.download:focus-visible { outline: 2px solid var(--lpr-gold); outline-offset: 2px; }
 
     footer.legal {
       text-align: center;
@@ -192,7 +207,7 @@
 <body>
   <div class="app">
     <header class="top">
-      <div class="avatar" aria-hidden="true">DS</div>
+      <img class="emblem" src="images/lpr-emblem-white.png" alt="LPR Business Services" />
       <div class="titles">
         <h1>Ask Danielle</h1>
         <div class="sub">Danielle Stone · LPR Business Services</div>
@@ -230,7 +245,7 @@
       Responses come from Danielle's virtual assistant and may not reflect her most current
       advice. Questions about your books, taxes, contracts, or anything with legal or financial
       weight are passed to Danielle to answer personally.
-      <span style="opacity:0.6">&nbsp;v5</span>
+      <span style="opacity:0.6">&nbsp;v6</span>
     </footer>
   </div>
 
@@ -460,17 +475,17 @@
         + "<title>Ask Danielle chat export</title><style>"
         + "body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;"
         + "color:#222;max-width:680px;margin:0 auto;padding:2rem 1.5rem;line-height:1.55;}"
-        + "h1{font-size:1.25rem;margin:0 0 0.2rem;color:#c0392b;}"
+        + "h1{font-size:1.25rem;margin:0 0 0.2rem;color:#b31b24;}"
         + ".meta{color:#667085;font-size:0.85rem;margin-bottom:1.5rem;}"
         + ".toolbar{margin:0 0 1.75rem;display:flex;gap:0.6rem;}"
         + ".toolbar a,.toolbar button{font:inherit;font-size:0.85rem;font-weight:600;cursor:pointer;"
-        + "border:1px solid #c0392b;border-radius:8px;padding:0.45rem 0.9rem;text-decoration:none;}"
-        + ".toolbar button{background:#c0392b;color:#fff;}"
-        + ".toolbar a{background:#fff;color:#c0392b;}"
+        + "border:1px solid #b31b24;border-radius:8px;padding:0.45rem 0.9rem;text-decoration:none;}"
+        + ".toolbar button{background:#b31b24;color:#fff;}"
+        + ".toolbar a{background:#fff;color:#b31b24;}"
         + ".entry{margin-bottom:1.15rem;page-break-inside:avoid;}"
         + ".who{font-weight:700;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;"
         + "color:#667085;margin-bottom:0.2rem;}"
-        + ".entry.you .who{color:#c0392b;}"
+        + ".entry.you .who{color:#b31b24;}"
         + ".text{font-size:0.95rem;}"
         + ".flagmark{background:#fff8e6;border:1px solid #f0d48a;color:#7a5b00;border-radius:6px;"
         + "padding:0.05rem 0.45rem;font-size:0.72rem;text-transform:none;letter-spacing:0;}"
