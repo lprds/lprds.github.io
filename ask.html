@@ -135,6 +135,30 @@
       margin-bottom: 0.3rem;
     }
 
+    .bubble table {
+      border-collapse: collapse;
+      margin: 0.5rem 0;
+      font-size: 0.86rem;
+      max-width: 100%;
+      display: block;
+      overflow-x: auto;
+      white-space: normal;
+    }
+    .bubble th {
+      background: var(--lpr-red-dark);
+      color: #fff;
+      text-align: left;
+      padding: 0.35rem 0.6rem;
+      font-weight: 600;
+    }
+    .bubble td {
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.6rem;
+      background: #fff;
+      vertical-align: top;
+    }
+    .bubble tr:nth-child(even) td { background: var(--bot-bubble); }
+
     .typing { display: inline-flex; gap: 6px; align-items: center; }
     .typing-note { font-size: 0.85rem; color: var(--muted); }
     .typing span {
@@ -246,7 +270,7 @@
       Responses come from Danielle's virtual assistant and may not reflect her most current
       advice. Questions about your books, taxes, contracts, or anything with legal or financial
       weight are passed to Danielle to answer personally.
-      <span style="opacity:0.6">&nbsp;v7</span>
+      <span style="opacity:0.6">&nbsp;v8</span>
     </footer>
   </div>
 
@@ -307,13 +331,43 @@
       if (emptyEl && emptyEl.parentNode) emptyEl.parentNode.removeChild(emptyEl);
     }
 
-    // Escape HTML, then render the light markdown the assistant uses (**bold** only).
+    // Escape HTML, then render the light markdown the assistant uses:
+    // **bold** and simple pipe tables. Everything else stays plain text.
     function renderMarkdown(text) {
       const esc = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
-      return esc.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+      const lines = esc.split("\n");
+      const out = [];
+      let i = 0;
+      const isRow = (s) => /^\s*\|.*\|\s*$/.test(s);
+      const isSep = (s) => /^\s*\|?[\s:|-]+\|?\s*$/.test(s) && s.indexOf("-") !== -1;
+      const cells = (s) => s.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+      while (i < lines.length) {
+        if (isRow(lines[i]) && i + 1 < lines.length && isSep(lines[i + 1])) {
+          const head = cells(lines[i]);
+          i += 2;
+          const body = [];
+          while (i < lines.length && isRow(lines[i]) && !isSep(lines[i])) {
+            body.push(cells(lines[i]));
+            i += 1;
+          }
+          let html = "<table><tr>" + head.map((h) => "<th>" + h + "</th>").join("") + "</tr>";
+          for (const r of body) {
+            html += "<tr>" + r.map((c) => "<td>" + c + "</td>").join("") + "</tr>";
+          }
+          out.push(html + "</table>");
+        } else {
+          out.push(lines[i]);
+          i += 1;
+        }
+      }
+      return out
+        .map((seg) => (seg.startsWith("<table>") ? seg : seg.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")))
+        .join("\n")
+        .replace(/\n(<table>)/g, "$1")
+        .replace(/(<\/table>)\n/g, "$1");
     }
 
     function addMessage(text, who, opts = {}) {
