@@ -160,7 +160,18 @@
     .bubble tr:nth-child(even) td { background: var(--bot-bubble); }
 
     .typing { display: inline-flex; gap: 6px; align-items: center; }
-    .typing-note { font-size: 0.85rem; color: var(--muted); }
+    .typing span.typing-note {
+      width: auto;
+      height: auto;
+      border-radius: 0;
+      background: none;
+      animation: none;
+      opacity: 1;
+      font-size: 0.85rem;
+      color: var(--muted);
+      white-space: normal;
+      margin-left: 4px;
+    }
     .typing span {
       width: 6px; height: 6px; border-radius: 50%;
       background: var(--muted); opacity: 0.5;
@@ -322,7 +333,7 @@
       Responses come from Danielle's virtual assistant and may not reflect her most current
       advice. Questions about your books, taxes, contracts, or anything with legal or financial
       weight are passed to Danielle to answer personally.
-      <span style="opacity:0.6">&nbsp;v10</span>
+      <span style="opacity:0.6">&nbsp;v11</span>
     </footer>
   </div>
 
