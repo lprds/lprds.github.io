@@ -135,7 +135,8 @@
       margin-bottom: 0.3rem;
     }
 
-    .typing { display: inline-flex; gap: 4px; align-items: center; }
+    .typing { display: inline-flex; gap: 6px; align-items: center; }
+    .typing-note { font-size: 0.85rem; color: var(--muted); }
     .typing span {
       width: 6px; height: 6px; border-radius: 50%;
       background: var(--muted); opacity: 0.5;
@@ -245,7 +246,7 @@
       Responses come from Danielle's virtual assistant and may not reflect her most current
       advice. Questions about your books, taxes, contracts, or anything with legal or financial
       weight are passed to Danielle to answer personally.
-      <span style="opacity:0.6">&nbsp;v6</span>
+      <span style="opacity:0.6">&nbsp;v7</span>
     </footer>
   </div>
 
@@ -341,16 +342,29 @@
       return row;
     }
 
+    let typingTimers = [];
     function showTyping() {
       removeEmpty();
       const row = document.createElement("div");
       row.className = "row bot";
       row.id = "typing-row";
-      row.innerHTML = '<div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>';
+      row.innerHTML = '<div class="bubble"><span class="typing"><span></span><span></span><span></span>' +
+        '<span class="typing-note" id="typing-note"></span></span></div>';
       messagesEl.appendChild(row);
       messagesEl.scrollTop = messagesEl.scrollHeight;
+      const note = (text) => {
+        const el = document.getElementById("typing-note");
+        if (el) { el.textContent = text; messagesEl.scrollTop = messagesEl.scrollHeight; }
+      };
+      typingTimers = [
+        setTimeout(() => note("Just a moment while I look that up."), 6000),
+        setTimeout(() => note("Still checking so I can give you the right answer."), 20000),
+        setTimeout(() => note("Almost there, thanks for hanging on."), 45000),
+      ];
     }
     function hideTyping() {
+      typingTimers.forEach(clearTimeout);
+      typingTimers = [];
       const t = document.getElementById("typing-row");
       if (t) t.remove();
     }
