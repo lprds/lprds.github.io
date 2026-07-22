@@ -165,6 +165,22 @@
     button.send:focus-visible { outline: 2px solid var(--lpr-red-dark); outline-offset: 2px; }
     button.send:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    button.download {
+      margin-left: auto;
+      background: #fff;
+      color: var(--lpr-red);
+      border: 1px solid var(--lpr-red);
+      border-radius: 10px;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+    }
+    button.download:hover { background: var(--lpr-red); color: #fff; }
+    button.download:focus-visible { outline: 2px solid var(--lpr-red); outline-offset: 2px; }
+
     footer.legal {
       text-align: center;
       font-size: 0.7rem;
@@ -181,6 +197,7 @@
         <h1>Ask Danielle</h1>
         <div class="sub">Danielle Stone · LPR Business Services</div>
       </div>
+      <button class="download" id="downloadBtn" type="button" hidden>Download chat</button>
     </header>
 
     <div class="disclosure">
@@ -236,6 +253,8 @@
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
     const history = [];
+    const transcript = [];   // clean copy for export (no control lines)
+    let isInternal = false;  // set from the backend; download is for Danielle's workers only
 
     // Auto-grow textarea
     input.addEventListener("input", () => {
@@ -318,6 +337,7 @@
       if (!text) return;
       addMessage(text, "user");
       history.push({ role: "user", content: text });
+      transcript.push({ who: "You", text: text });
       input.value = "";
       input.style.height = "auto";
       input.focus();
@@ -351,6 +371,11 @@
         // question for the real Danielle, so render it as a flagged message.
         const reply = data.reply || "Sorry, I didn't catch that. Could you rephrase?";
         addMessage(reply, "bot", { flag: !!data.escalate });
+        transcript.push({ who: "Assistant", text: reply + (data.escalate ? "\n[Flagged for Danielle]" : "") });
+        if (data.internal === true && !isInternal) {
+          isInternal = true;
+          document.getElementById("downloadBtn").hidden = false;
+        }
         // Keep the control line in the history we send back (the model must see its own
         // format on prior turns, or it stops emitting it and every reply gets flagged).
         history.push({
@@ -367,6 +392,35 @@
       } finally {
         sendBtn.disabled = false;
       }
+    });
+
+    // Download chat (internal users only; button stays hidden for clients)
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      if (!isInternal || transcript.length === 0) return;
+      const stamp = new Date();
+      const dateStr = stamp.getFullYear() + "-" +
+        String(stamp.getMonth() + 1).padStart(2, "0") + "-" +
+        String(stamp.getDate()).padStart(2, "0");
+      const lines = [
+        "Ask Danielle chat export",
+        "LPR Business Services",
+        "Exported: " + stamp.toLocaleString(),
+        "----------------------------------------",
+        "",
+      ];
+      for (const entry of transcript) {
+        lines.push(entry.who + ":");
+        lines.push(entry.text);
+        lines.push("");
+      }
+      const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "ask-danielle-chat-" + dateStr + ".txt";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
     });
   </script>
 </body>
