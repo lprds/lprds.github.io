@@ -263,6 +263,15 @@
       if (emptyEl && emptyEl.parentNode) emptyEl.parentNode.removeChild(emptyEl);
     }
 
+    // Escape HTML, then render the light markdown the assistant uses (**bold** only).
+    function renderMarkdown(text) {
+      const esc = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      return esc.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+    }
+
     function addMessage(text, who, opts = {}) {
       removeEmpty();
       const row = document.createElement("div");
@@ -274,7 +283,12 @@
         head.className = "flag-head";
         head.textContent = "Flagged for Danielle";
         bubble.appendChild(head);
-        bubble.appendChild(document.createTextNode(text));
+        const body = document.createElement("div");
+        body.innerHTML = who === "bot" ? renderMarkdown(text) : "";
+        if (who !== "bot") body.textContent = text;
+        bubble.appendChild(body);
+      } else if (who === "bot") {
+        bubble.innerHTML = renderMarkdown(text);
       } else {
         bubble.textContent = text;
       }
@@ -337,7 +351,12 @@
         // question for the real Danielle, so render it as a flagged message.
         const reply = data.reply || "Sorry, I didn't catch that. Could you rephrase?";
         addMessage(reply, "bot", { flag: !!data.escalate });
-        history.push({ role: "assistant", content: reply });
+        // Keep the control line in the history we send back (the model must see its own
+        // format on prior turns, or it stops emitting it and every reply gets flagged).
+        history.push({
+          role: "assistant",
+          content: (data.escalate ? "ESCALATE: true" : "ESCALATE: false") + "\n\n" + reply,
+        });
       } catch (err) {
         hideTyping();
         addMessage(
