@@ -138,3 +138,13 @@ _**Cost ceiling: 15 hours.** Above Claude's ~8hr recommendation; Danielle's deci
 ## Interview closed
 All 14 playbook questions reached. Phases 1–4 completed in full. No questions skipped by Danielle; two sub-questions went unanswered initially and one (how he receives money) was closed later in the session — see A5-followup. Q6 was not separately answered; A1 stands.
 
+
+## Post-interview additions (same session, after synthesis)
+
+**Danielle (unprompted, feature additions):** "Okay. So another thing that I'm finding is that, um, the approval process... there's no approval flow in acorns, and so that's something that I want to have be a a feature is, you know, the child can check off the tasks as being done, but there's no cross verification to ensure that they have been done by me, by, like, the parental role. So that would be a nice feature. Another thing that, um, exists in the acorns app is a, uh, a co parent account. So to be able to have just... to be able to add, like, another parent. would would be great because then we can all sort of assign tasks. It's a family. You might already have that built in. But, anyway,"
+
+_Two features captured:_
+1. **Parent verification of task completions (D12).** Kid checks off → parent Approvals queue → payout posts only on approval. Danielle notes **Acorns has no such flow** — it pays on unverified self-report. Already present in the specced data model (`task_completions.status` + approval-gated transaction posting); now recorded as an explicit requirement and as a **product differentiator**, not an implementation detail.
+2. **Co-parent accounts (D13).** More than one parent per household, all able to assign tasks. Acorns has this. Structurally free in the existing model (`profiles` is household-scoped with a `role`), so N parents needs no schema change; the **invite flow and second-parent onboarding are new work**, scoped to pass 2. Added a `household_invites` table to the model.
+
+_New open question raised by D13, deliberately not decided:_ in a two-parent household, does **one** parent's approval release the payout or must **both** sign off? Household policy, not a technical call. Default if unanswered: one.

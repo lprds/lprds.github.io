@@ -120,6 +120,14 @@ Sources: [App Store](https://apps.apple.com/us/app/acorns-early-kids-money-app/i
 | D9 | Cost bucket: **speculative R&D, hours logged** | A12 |
 | D10 | Sign-off: **Danielle only** | A13 |
 | D11 | **Cost ceiling: 15 hours** of Danielle's time | A14 |
+| D12 | **Parent verification of task completions is required.** Kid checks off → lands in a parent Approvals queue → payout posts only on approval. Acorns has NO such flow; it pays on unverified self-report | Post-interview, Danielle |
+| D13 | **Multi-parent households.** More than one parent per household, all able to assign tasks. Acorns has a co-parent account; match it | Post-interview, Danielle |
+
+### Differentiators vs Acorns (product angle — keep this list growing)
+
+1. **Verified completions.** Acorns pays out on the child's unverified self-report. This app requires a parent to confirm the task was actually done before money moves. Danielle raised this unprompted as a gap in Acorns.
+2. **No subscription.** $0 running cost vs $8–12/mo.
+3. **Real ledger literacy.** A genuine transaction register with running balance, as a first-class drill-down — an explicit teaching goal, not a statement view.
 
 ## 5. Non-negotiable requirements (all four, unranked)
 
@@ -137,6 +145,15 @@ households          id, name, created_at
 profiles            id (= auth.users.id), household_id, role ('parent'|'kid'),
                     first_name, created_at
                     -- first name ONLY. no kid email, no DOB, no surname (D6)
+                    -- N parents per household is supported with no schema change
+                    --    (D13). Any profile with role='parent' in the household
+                    --    can assign tasks and approve. See §6a for the open
+                    --    question on whether one approval suffices.
+
+household_invites   id, household_id, role, token, invited_by,
+                    accepted_by NULL, expires_at, created_at
+                    -- co-parent invite flow (D13). Schema listed here; UI is
+                    --    pass 2.
 
 tasks               id, household_id, kid_id, title, amount_cents,
                     kind ('recurring'|'one_off'), schedule, active, created_at
@@ -166,6 +183,19 @@ transactions        id, household_id, kid_id, occurred_at, description,
 
 **Idempotency is enforced in the database, not the app.** Both unique constraints above are the actual guardrail; UI-level double-click protection is not sufficient.
 
+### §6a — Approval semantics (D12)
+
+The flow, precisely:
+
+1. Kid marks a task done → row in `task_completions` with `status='pending'`. **No transaction is written.**
+2. A parent approves → `status='approved'`, `decided_by` = that parent's profile id, `decided_at` stamped.
+3. **Only then** does a `transactions` row post, with `source_type='task_completion'`, `source_id` = the completion id. The unique constraint on `(source_type, source_id)` makes a second approval physically unable to pay twice.
+4. Decline → `status='declined'`, no transaction, and the kid sees it went back with a reason.
+
+`decided_by` gives a full audit trail of which parent approved what — which matters more once there's a co-parent.
+
+**Open question for Danielle (do not decide unilaterally):** in a two-parent household, does **one** parent's approval release the payout, or must **both** sign off? One-approval is the sane default and what Claude would build absent an answer, but it's a household-policy call, not a technical one.
+
 ## 7. Screen inventory
 
 **Kid app** (must be enticing — D3, requirement #4)
@@ -192,6 +222,7 @@ transactions        id, household_id, kid_id, occurred_at, description,
 
 **Pass 2 — deferred but wanted (Danielle: "I need all this built in")**
 - Savings goals / named buckets ← **highest-value deferred item**; it's the savings incentive and Danielle raised it unprompted. Pull into v0.1 if hours allow.
+- **Co-parent invite flow** (D13) — schema supports N parents from day one; the invite UI and second-parent onboarding are pass 2.
 - One-off job requests
 - Spend-request flow
 - Parent-paid interest on goal balances (the "incentivize saving" mechanic)
@@ -233,6 +264,8 @@ Claude recommended ~8 hrs; **Danielle set 15**, explicitly buying option value o
 - **What shipping unlocks** beyond the maybe-LPR-product angle — Q6 not answered.
 - **Product economics** — whether anyone would pay, and at what price. Gated on the pilot.
 - **Interest rate** for the parent-paid-interest mechanic, if built.
+- **One approval or two?** In a two-parent household, does one parent's approval release a payout or must both sign off? See §6a. Default assumption if unanswered: one.
+- **Who is the co-parent** and should they be invited for v0.1 or later? Danielle raised co-parent accounts as a wanted feature but didn't say whether it's needed now.
 
 ## 12. Watch items
 
