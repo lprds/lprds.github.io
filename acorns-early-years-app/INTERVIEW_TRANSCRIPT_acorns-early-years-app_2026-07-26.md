@@ -38,4 +38,14 @@ _Requirements captured from this answer:_
 - **Saving must be incentivized**, not just permitted — the app should make saving feel rewarding rather than like withheld spending.
 - _Claude's recommendation (decided, not asked): parent-paid interest on goal balances, per Acorns' model — trivial to implement since settlement is manual._
 
-**Q4 (smallest version that proves it):** _pending_
+**Q4 (smallest version that proves it):** You've described the full v1 — tasks, one-offs, goals, interest, lessons, register. What's the smallest slice you could put in front of your son *this week* that would tell you he'll actually use it? My instinct is balance + register + recurring tasks he can check off, with you approving payouts — goals and lessons in the next pass. Would that be enough to prove it, or is there one thing in your list that has to be there on day one or he loses interest?
+**A4:** "Yeah. That would be fine. Um, one thing to note is that, you know, he's gonna have to have a login. Um, I'm gonna have to be able to see it. He's gonna have to be able to see it. He's gonna... we're gonna need to, um, have a way to get this information to me so I can move the money around so that it's, you know, when he asks me to buy this or that that I actually have the money set aside for it. Um, and, also, um, we're not in the same household right now. We won't be for the next two months. So he is going to need a way to log in to this and need to log in to it to see the backside, and it's gotta be in sync. So that's also important for week one."
+
+_v0.1 scope agreed:_ balance + transaction register + recurring tasks he checks off + parent approval of payouts. Goals and lessons follow in pass 2.
+_Hard week-one constraints added by Danielle:_
+- **Two separate logins** — one for her, one for her son.
+- **Hosted and synced across devices.** They are **not in the same household and won't be for ~2 months**, so a local/single-device app is disqualified from day one.
+- **A settlement channel to the parent** — the app must tell Danielle what money to move so the cash is actually set aside when he asks to buy something.
+_Claude's tech decision (decided, not asked): static front end on GitHub Pages in this repo + Supabase (Postgres + Auth + row-level security) with household-scoped rows — satisfies remote sync, two roles, and the multi-tenant foundation for a future LPR product._
+
+**Q5 (what this replaces):** _pending_
