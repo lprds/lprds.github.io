@@ -53,4 +53,15 @@ _Claude's tech decision (decided, not asked): static front end on GitHub Pages i
 _Replaces: a live Acorns Early subscription (~$12/mo) **and** informal tracking (in-head / notes / envelope cash)._
 _**Unanswered sub-question:** how he physically receives money today. Flagged as needed before building the settlement report — not assumed._
 
-**Q6 (what shipping unlocks):** _pending_
+**Q6 (what shipping unlocks):** You already flagged the LPR-product angle back in Q1. Beyond that — does shipping this unlock anything else for you? (A reusable auth + household + ledger foundation you'd build other client apps on, for instance, or is it genuinely just this one thing plus the maybe-sell-it later?)
+**A6:** Not separately answered — Danielle answered the open Q5 sub-question instead (below). A1's "might be an LPR product" stands as the recorded unlock; nothing further was volunteered and nothing is assumed.
+
+**A5-followup (closing the open sub-question — how he receives money today):** "He doesn't ever actually receive the money. It's in a... it's in an account that I control. He very, very rich is anything with cash. any very rarely purchases anything on his own because he doesn't have a debit card. And where we live doesn't really take debit cards."
+_(Voice answer; "very very rich is anything with cash" appears to be dictation garble for "very rarely handles cash.")_
+_Facts: the money lives in **an account Danielle controls**. He never receives it. He rarely handles cash, rarely buys anything himself, has **no debit card**, and their location largely **doesn't accept debit cards**._
+_Design implications:_
+- **No transfer instructions are needed.** There is no money movement to script. The parent view needs a standing **"what I owe him"** total plus **how much is earmarked per goal**.
+- **Spending is a request, not a purchase.** Required flow: kid submits a **spend request** against his balance or a specific goal → parent approves/declines → approval posts the debit to the ledger. This is the concrete mechanism behind Danielle's stated need that "when he asks me to buy this or that, I actually have the money set aside for it."
+
+## Phase 3 — Lifecycle & Risk
+_pending — exit offered at phase transition_
