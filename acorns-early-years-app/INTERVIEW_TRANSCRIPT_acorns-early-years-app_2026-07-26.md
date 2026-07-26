@@ -16,4 +16,9 @@ _(Answer given by voice; opening words garbled in transcription. Recorded verbat
 _Claude's tightening, offered back for correction:_ "Teach my son to earn, track, and save money — plus financial lessons he earns money for completing — on a virtual ledger I settle from my own bank, without paying Acorns $12/month."
 _Requirement surfaced: the app must notify/report to the parent what transfers to make, so real money can be moved externally._
 
-**Q3 (why now):** _pending_
+**Q3 (why now):** Why now? Is he at an age where this just became relevant, are you already paying Acorns and want out, or did something else make this week the week?
+**A3:** "Yeah. He said an eight where this is a relevant thing. He wants to buy things. He's constantly asking me to buy this for her or that for him, and he's trying to get a bite. And his head, he's doing a great job of it too, but this sort of gives him a visual so that he can see. And the other thing is that, you know, he's starting in this way. He's actually learning the transactional piece. He sort of already knows that, but this is what I want him to learn a a bit more now."
+_(Voice answer; "He said an eight" = he's 8 years old. Design constraint surfaced: must be usable by an 8-year-old unassisted.)_
+
+## Phase 2 — Shape & Scope
+_pending — exit offered at phase transition_
