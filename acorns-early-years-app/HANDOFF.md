@@ -2,10 +2,59 @@
 
 _Written 2026-07-26. Purpose: resume this project on Danielle's own computer with **zero additional questions**. Everything decided in the kickoff session is captured here._
 
-**Branch:** `claude/acorns-early-years-app-ltfjmh` in `lprds/lprds.github.io`
-**Companion files in this folder:**
-- `INTERVIEW_TRANSCRIPT_acorns-early-years-app_2026-07-26.md` — full verbatim Q&A
-- `KICKOFF_SYNTHESIS_acorns-early-years-app_2026-07-26.md` — distilled synthesis
+---
+
+## ⬛ WHERE EVERYTHING IS — READ THIS FIRST
+
+**Nothing was saved to Google Drive. Nothing was saved to your local machine.** This session ran in a remote container with no access to either. **Everything lives in GitHub**, plus one session note in ClickUp.
+
+### GitHub (the only copy of these files)
+
+| | |
+|---|---|
+| **Repo** | `lprds/lprds.github.io` |
+| **Branch** | `claude/acorns-early-years-app-ltfjmh` ← NOT `main` |
+| **Folder** | `acorns-early-years-app/` (repo root) |
+
+Three files, all in that one folder:
+
+| File | What it is |
+|---|---|
+| `HANDOFF.md` | **This file.** Start here. |
+| `KICKOFF_SYNTHESIS_acorns-early-years-app_2026-07-26.md` | Distilled synthesis |
+| `INTERVIEW_TRANSCRIPT_acorns-early-years-app_2026-07-26.md` | Full verbatim Q&A |
+
+### To get it on your computer — copy/paste this
+
+```bash
+cd ~/lprds.github.io            # wherever your clone lives
+git fetch origin claude/acorns-early-years-app-ltfjmh
+git checkout claude/acorns-early-years-app-ltfjmh
+ls acorns-early-years-app/
+```
+
+Then open `acorns-early-years-app/HANDOFF.md`.
+
+**If you don't have the repo cloned yet:**
+```bash
+git clone https://github.com/lprds/lprds.github.io.git
+cd lprds.github.io
+git checkout claude/acorns-early-years-app-ltfjmh
+```
+
+**To read it in a browser without cloning:**
+`https://github.com/lprds/lprds.github.io/tree/claude/acorns-early-years-app-ltfjmh/acorns-early-years-app`
+
+### ClickUp
+
+Session note filed as page **`SESSION_NOTES_2026-07-26`** in ClickUp doc **`8ckxy74-573`** (workspace `9013491940`).
+
+### Not done — deliberately
+
+- **No ClickUp list created** for this project yet (awaiting your go-ahead).
+- **No Google Drive files written.** If you want these mirrored to `Claude Cowork/`, say so and I'll copy them over — I do have Drive access.
+
+---
 
 **Status: kickoff complete. No code written yet.** Nothing has been built, no Supabase project exists, no schema applied.
 
