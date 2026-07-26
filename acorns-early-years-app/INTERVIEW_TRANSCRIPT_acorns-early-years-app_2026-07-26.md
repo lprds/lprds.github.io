@@ -48,4 +48,9 @@ _Hard week-one constraints added by Danielle:_
 - **A settlement channel to the parent** — the app must tell Danielle what money to move so the cash is actually set aside when he asks to buy something.
 _Claude's tech decision (decided, not asked): static front end on GitHub Pages in this repo + Supabase (Postgres + Auth + row-level security) with household-scoped rows — satisfies remote sync, two roles, and the multi-tenant foundation for a future LPR product._
 
-**Q5 (what this replaces):** _pending_
+**Q5 (what this replaces):** What does this replace? Are you currently paying for Acorns Early (so this cancels a real $12/month), or has it been you tracking it in your head, a notes app, cash in an envelope — something else? And relatedly, when he earns money today, how does he actually get it?
+**A5:** "Yes. It's been all of those things."
+_Replaces: a live Acorns Early subscription (~$12/mo) **and** informal tracking (in-head / notes / envelope cash)._
+_**Unanswered sub-question:** how he physically receives money today. Flagged as needed before building the settlement report — not assumed._
+
+**Q6 (what shipping unlocks):** _pending_
