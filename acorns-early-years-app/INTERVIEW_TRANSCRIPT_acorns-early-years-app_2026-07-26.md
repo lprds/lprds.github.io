@@ -74,4 +74,13 @@ _Captured as standing constraints, not pursued now (explicit "don't divert"):_
 - Danielle was unsure whether Claude can reach her Google Drive. **Claude confirmed: Google Drive MCP access IS available in this session** and can be used to pull the accounting-platform docs later.
 - **HARD DELIVERABLE:** a detailed handoff file covering everything decided in this session, written so work resumes on her computer **with zero additional questions**.
 
-**Q8 (failure mode that can't be tolerated):** _pending_
+**Q8 (failure mode that can't be tolerated):** What's the failure mode you can't tolerate here? I can think of a few candidates — the ledger silently loses or miscounts money he earned (he stops trusting it, and that's the whole point gone), or his login is weak enough that a 10-year-old's data is exposed, or you approve a payout twice and don't notice. Which of those is the one that actually worries you, or is it something I haven't named?
+**A8:** "All of those are terrible things. Um, so I'm not gonna call out just one because none of those things should happen. Um, and then I I Let's see. Another failure would be... well, that's just not engaging enough for him to even care when he is it. That would be a major fail."
+
+_Non-negotiable (all treated as baseline requirements, not ranked risks):_
+1. **Ledger correctness** — money earned is never lost or miscounted. Trust in the ledger is the product.
+2. **Auth strength** — a 10-year-old's data must not be exposed by a weak login.
+3. **No duplicate/unnoticed payouts** — approval must be idempotent and auditable.
+4. **Engagement (added by Danielle):** "not engaging enough for him to even care" = major fail. The only one of the four that is a product risk rather than an engineering one.
+
+**Q9 (kill criteria):** _pending_
