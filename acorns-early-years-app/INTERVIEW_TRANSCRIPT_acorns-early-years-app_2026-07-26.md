@@ -117,4 +117,24 @@ _Next step (not done this session): set up ClickUp time tracking against this pr
 **A13:** "Just me."
 _Sign-off: **Danielle only.** No other guardian review required._
 
-**Q14 (cost ceiling):** _pending_
+**Q14 (cost ceiling):** What's the cost ceiling? Running cost is ~$0, so the real spend is your hours. You told me a rejection means iterating with him rather than quitting — which is the right instinct but also exactly how a project quietly eats 40 hours. So: how many of your hours does this get before you'd stop and say the $12/month was cheaper?
+**A14 (first response — asked Claude to do the math first):** "Well, you gotta think about it like this. If this app is built for, what, sixteen to eighteen or six to eighteen year olds, and we take twelve dollars a month, and we multiply it by that many years. And we call it... we see what that costs, right, versus how many hours billable at hundred and fifty bucks an hour And then we say, what is the cost of not selling something like this? Um, I think that's the math that we have to do to figure out whether it's worth it. Um, so I think that we need to figure that math out before I can answer the question."
+
+_Claude's math, provided in response:_
+
+| Scenario | Months | Total Acorns cost | Break-even at $150/hr |
+|---|---|---|---|
+| Full 6→18 span, Gold $12/mo | 144 | $1,728 | 11.5 hrs |
+| Her son, 10→18, Gold $12/mo | 96 | $1,152 | 7.7 hrs |
+| Her son, 10→18, Lite $8/mo | 96 | $768 | 5.1 hrs |
+
+_Product side: at $6/mo priced, ~$4/mo net after Stripe/Supabase/support, a 40-hour ($6,000) build needs ~1,500 family-months to return — ~125 paying families for a year, or ~60 for two._
+_Framing correction offered: the $150/hr opportunity cost only applies to hours that would otherwise have been billable._
+_Claude's recommendation: **~8 hours** for v0.1, justified by the household case alone; treat product investment as a separate decision after pilot evidence._
+
+**A14 (final answer):** "So let's call it 15 hours of my time."
+_**Cost ceiling: 15 hours.** Above Claude's ~8hr recommendation; Danielle's decision, understood as buying option value on the product bet. Recorded as decided, not contested._
+
+## Interview closed
+All 14 playbook questions reached. Phases 1–4 completed in full. No questions skipped by Danielle; two sub-questions went unanswered initially and one (how he receives money) was closed later in the session — see A5-followup. Q6 was not separately answered; A1 stands.
+
