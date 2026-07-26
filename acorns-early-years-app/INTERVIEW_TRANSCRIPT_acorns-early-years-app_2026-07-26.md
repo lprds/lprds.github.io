@@ -113,4 +113,8 @@ _⚠️ Flag for the pilot: other people's children's data raises the stakes abo
 _Cost bucket: **speculative R&D, hours tracked.** Rationale: the possible LPR product means true build cost needs to be known before it could ever be priced._
 _Next step (not done this session): set up ClickUp time tracking against this project._
 
-**Q13 (reviewer / sign-off):** _pending_
+**Q13 (reviewer / sign-off):** Who signs off before your son sees it? Default assumption is just you. But since you're in separate households right now — is there another parent or guardian who should know this exists before a 10-year-old starts logging into an app that tracks money you owe him? I'd rather ask than assume.
+**A13:** "Just me."
+_Sign-off: **Danielle only.** No other guardian review required._
+
+**Q14 (cost ceiling):** _pending_
