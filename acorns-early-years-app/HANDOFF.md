@@ -23,6 +23,7 @@ Three files, all in that one folder:
 | `HANDOFF.md` | **This file.** Start here. |
 | `KICKOFF_SYNTHESIS_acorns-early-years-app_2026-07-26.md` | Distilled synthesis |
 | `INTERVIEW_TRANSCRIPT_acorns-early-years-app_2026-07-26.md` | Full verbatim Q&A |
+| `SESSION_NOTES_2026-07-26.md` | Session note — **still needs pasting into ClickUp doc `8ckxy74-573`** |
 
 ### To get it on your computer — copy/paste this
 
@@ -47,12 +48,22 @@ git checkout claude/acorns-early-years-app-ltfjmh
 
 ### ClickUp
 
-Session note filed as page **`SESSION_NOTES_2026-07-26`** in ClickUp doc **`8ckxy74-573`** (workspace `9013491940`).
+**List created:** "Kids Money App (Acorns Early-style)" in the Claude CoWork Projects space (`901313736752`).
+List ID `1000450000004370` → https://app.clickup.com/9013491940/v/l/li/1000450000004370
+**It is empty** — task seeding was blocked (see below).
+
+### ⚠️ Blocked — needs your hand
+
+The ClickUp MCP server disconnected and reconnected mid-session under a new server ID, and its **write** tools now require an approval this non-interactive session can't prompt for. Two things didn't land:
+
+1. **The session note was not filed to ClickUp doc `8ckxy74-573`.** The full note is written and committed as `SESSION_NOTES_2026-07-26.md` in this folder — paste it in as a new page titled `SESSION_NOTES_2026-07-26`.
+2. **The ClickUp list is empty.** Suggested first tasks are listed in that session note under Open Items.
+
+(The list itself exists because that call went through *before* the reconnect.)
 
 ### Not done — deliberately
 
-- **No ClickUp list created** for this project yet (awaiting your go-ahead).
-- **No Google Drive files written.** If you want these mirrored to `Claude Cowork/`, say so and I'll copy them over — I do have Drive access.
+- **No Google Drive files written.** If you want these mirrored to `Claude Cowork/`, say so and I'll copy them over — Drive access is available.
 
 ---
 
