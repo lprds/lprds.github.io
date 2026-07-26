@@ -105,4 +105,12 @@ _Claude's decision (not asked): build **data-minimal anyway** — first name onl
 _⚠️ Flag for the pilot: other people's children's data raises the stakes above household-only. Revisit the COPPA gate **before** the pilot expands beyond a handful of known families._
 
 ## Phase 4 — Logistics
-_pending — exit offered at phase transition_
+
+**Phase-transition exit offered.** Danielle: "Keep going."
+
+**Q12 (cost bucket):** Cost bucket — is this personal/family time, LPR overhead, or speculative R&D you'd want tracked as a potential product investment? It matters because you flagged a possible LPR product: if it's R&D, the hours are worth logging now so you know what the thing actually cost you if you ever price it.
+**A12:** "Yes. Um, log the hours."
+_Cost bucket: **speculative R&D, hours tracked.** Rationale: the possible LPR product means true build cost needs to be known before it could ever be priced._
+_Next step (not done this session): set up ClickUp time tracking against this project._
+
+**Q13 (reviewer / sign-off):** _pending_
