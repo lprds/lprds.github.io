@@ -83,4 +83,11 @@ _Non-negotiable (all treated as baseline requirements, not ranked risks):_
 3. **No duplicate/unnoticed payouts** — approval must be idempotent and auditable.
 4. **Engagement (added by Danielle):** "not engaging enough for him to even care" = major fail. The only one of the four that is a product risk rather than an engineering one.
 
-**Q9 (kill criteria):** _pending_
+**Q9 (kill criteria):** What would make you kill this halfway through? The honest version — if you'd re-subscribe to Acorns and walk away rather than keep going, what would have to be true? (He tried it for two weeks and ignored it? You'd sunk 20 hours and it still wasn't reliable? Something else?)
+**A9:** "Well, that he tried it. Yeah. Actually, he tried it for two weeks and and was like, no. This is dumb. That wouldn't necessarily make me resubscribe to Acorns because this is kind of like a trial run for that... for the Acorns platform and whether or not he can be engaged with this. And so I probably wouldn't resubscribe, but I might talk to him about what what he might want to see differently so that it is more engaging."
+
+_Trigger: he tries it ~2 weeks and rejects it. **Response is iterate, not abandon** — Danielle would ask him what he'd want differently rather than resubscribe._
+_Reframe surfaced: this build is itself a **trial run for whether the paid Acorns platform is worth it at all** — testing whether he engages with this category of app._
+_Implication: the son is a **stakeholder in the design**, not just an end user. Build so screens are cheap to change after he reacts. Real spend discipline therefore lives in the cost ceiling (Q14), not in a hard kill switch._
+
+**Q10 (6-month abandonment cost):** _pending_
