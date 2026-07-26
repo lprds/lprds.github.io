@@ -96,4 +96,13 @@ _Implication: the son is a **stakeholder in the design**, not just an end user. 
 _**Export is a hard requirement**, not a nice-to-have: full ledger exportable as a CSV/statement so the outstanding obligation can be settled._
 _Recurring-cost half not answered by Danielle. Claude's answer (decided, not asked): **$0** — GitHub Pages is free, Supabase free tier covers a two-user household. An abandoned app accrues nothing._
 
-**Q11 (PII posture):** _pending_
+**Q11 (PII posture):** For your own household this is low-stakes — his name, a balance, some chores. But you said you might sell this. The moment other families' kids are in it, a US app collecting data from under-13s triggers COPPA — verifiable parental consent, data minimization, deletion rights, a privacy policy. Do you want me to build v0.1 COPPA-shaped from the start (no kid email, parent-created kid accounts, first name only, nothing collected that isn't needed), or keep it minimal now and treat COPPA as a gate you'd deal with only if you actually productize?
+**A11:** "Probably don't build that piece now, but definitely keep it in the pipeline for, um, for if this works and it's engaging. Um, I might try this on, you know, a couple people that I know, uh, with kids just to see if it's engaging. We can get more data, like, you know, about that before we run a live as a, you know, as a real product."
+
+_Decision: **do not build COPPA compliance now.** Keep it in the pipeline, gated on the app proving engaging._
+_New fact: Danielle may run a **friends-and-family pilot** (a couple of people she knows, with kids) to gather engagement data before any real product launch._
+_Claude's decision (not asked): build **data-minimal anyway** — first name only, no kid email, parent creates the kid account. Zero cost now, keeps a friends-and-family pilot defensible, and makes COPPA later a paperwork problem rather than a schema migration._
+_⚠️ Flag for the pilot: other people's children's data raises the stakes above household-only. Revisit the COPPA gate **before** the pilot expands beyond a handful of known families._
+
+## Phase 4 — Logistics
+_pending — exit offered at phase transition_
