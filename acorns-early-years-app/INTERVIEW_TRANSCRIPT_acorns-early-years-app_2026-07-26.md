@@ -18,7 +18,11 @@ _Requirement surfaced: the app must notify/report to the parent what transfers t
 
 **Q3 (why now):** Why now? Is he at an age where this just became relevant, are you already paying Acorns and want out, or did something else make this week the week?
 **A3:** "Yeah. He said an eight where this is a relevant thing. He wants to buy things. He's constantly asking me to buy this for her or that for him, and he's trying to get a bite. And his head, he's doing a great job of it too, but this sort of gives him a visual so that he can see. And the other thing is that, you know, he's starting in this way. He's actually learning the transactional piece. He sort of already knows that, but this is what I want him to learn a a bit more now."
-_(Voice answer; "He said an eight" = he's 8 years old. Design constraint surfaced: must be usable by an 8-year-old unassisted.)_
+_(Voice answer; heavily garbled by dictation. See A3-correction below for the accurate version.)_
+
+**A3-correction (Danielle, unprompted, same session):** "I need to clarify on that last part. He's ten. He's not eight, and there's... this dictation took down a lot of things wrong. Um, he's trying to track all the money that he earns and spends in his head, and he's doing a good job, which is fine, but I also want him to be able to see it so that he doesn't have to, um, sort of wonder and sort of forget. I want him to start learning about what a ledger is. which will sort of help in this way. And also the concept of transaction... transactions."
+_Corrected facts: son is **10**, not 8. He currently tracks earnings and spending **in his head** and does it well — the gap is visibility/recall, not accuracy. Explicit learning goals: **what a ledger is** and **the concept of transactions**._
+_Design implication: the hero screen is a real transaction register (date, description, in/out, running balance), not a gamified balance display. Ledger literacy is a stated product goal, not a side effect._
 
 ## Phase 2 — Shape & Scope
 _pending — exit offered at phase transition_
