@@ -90,4 +90,10 @@ _Trigger: he tries it ~2 weeks and rejects it. **Response is iterate, not abando
 _Reframe surfaced: this build is itself a **trial run for whether the paid Acorns platform is worth it at all** — testing whether he engages with this category of app._
 _Implication: the son is a **stakeholder in the design**, not just an end user. Build so screens are cheap to change after he reacts. Real spend discipline therefore lives in the cost ceiling (Q14), not in a hard kill switch._
 
-**Q10 (6-month abandonment cost):** _pending_
+**Q10 (6-month abandonment cost):** If you abandon this in six months, what breaks? Specifically: he'll have a balance in it that represents real money you owe him — is there an obligation there you'd need to settle or export? And does anything keep costing you (Supabase tier, domain) if it just sits there?
+**A10:** "Yes. I'd need to settle and export the data."
+
+_**Export is a hard requirement**, not a nice-to-have: full ledger exportable as a CSV/statement so the outstanding obligation can be settled._
+_Recurring-cost half not answered by Danielle. Claude's answer (decided, not asked): **$0** — GitHub Pages is free, Supabase free tier covers a two-user household. An abandoned app accrues nothing._
+
+**Q11 (PII posture):** _pending_
