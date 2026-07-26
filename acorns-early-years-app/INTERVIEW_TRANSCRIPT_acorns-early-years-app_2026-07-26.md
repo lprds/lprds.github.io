@@ -64,4 +64,14 @@ _Design implications:_
 - **Spending is a request, not a purchase.** Required flow: kid submits a **spend request** against his balance or a specific goal → parent approves/declines → approval posts the debit to the ledger. This is the concrete mechanism behind Danielle's stated need that "when he asks me to buy this or that, I actually have the money set aside for it."
 
 ## Phase 3 — Lifecycle & Risk
-_pending — exit offered at phase transition_
+
+**Phase-transition exit offered.** Danielle did not take the exit; she added standing context and instructed Claude to continue:
+
+**A (unprompted, standing instruction):** "Well, in some ways, it sort of ties into the accounting platform that we were working on for myself and then also for the TFE. Um, I don't know if you can see that in my Google Drive folder because we're not connected to the computer. Hopefully, there's a way that this links, but, um, also know that this this is gonna have to... I'm gonna need a very detailed file that explains all of what we're doing right now so that once on back on my computer, we can we can pick it up without any additional questions. So keep that in mind. Don't divert. Just keep that in mind."
+
+_Captured as standing constraints, not pursued now (explicit "don't divert"):_
+- **Relates to the in-progress accounting platform** for Danielle herself and for **TFE (The Finished Edge)**. Likely shared ledger/transaction concepts — worth reconciling before finalizing the data model, but NOT this session.
+- Danielle was unsure whether Claude can reach her Google Drive. **Claude confirmed: Google Drive MCP access IS available in this session** and can be used to pull the accounting-platform docs later.
+- **HARD DELIVERABLE:** a detailed handoff file covering everything decided in this session, written so work resumes on her computer **with zero additional questions**.
+
+**Q8 (failure mode that can't be tolerated):** _pending_
