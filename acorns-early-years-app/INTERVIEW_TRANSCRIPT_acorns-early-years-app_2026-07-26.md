@@ -25,4 +25,17 @@ _Corrected facts: son is **10**, not 8. He currently tracks earnings and spendin
 _Design implication: the hero screen is a real transaction register (date, description, in/out, running balance), not a gamified balance display. Ledger literacy is a stated product goal, not a side effect._
 
 ## Phase 2 — Shape & Scope
-_pending — exit offered at phase transition_
+
+**Phase-transition exit offered.** Danielle did not take the exit; instead she pushed back on Claude's "ledger as hero screen" reading and volunteered scope:
+
+**A (unprompted, correcting Claude's design read):** "It still needs to be enticing to a kid. It can't look like when I log in to my bank and I see debits and credits, it's gonna be, you know, pretty boring for a kid. That should be a view that he can click on to see, oh, this is why I got that date. This is why I spent that date. But that shouldn't be the hero page. No. The hero page should show his balance, then show, you know, what can I do to earn money this week. What money am I gonna earn this week if I do these things? Because acorn has the concept of tasks. And then it's got the, like, one offs. Oh, I need some extra money this week. I wanna do a one off for... to get that because I wanna get this other thing. But I also want him to... one of the tasks is I want him to be able to... I want incentivize incentivize statings for him so that he's not just like, oh, I've got all this money, and now I can spend it. It's like, yeah, you could spend some of it. Well, but I wanna somehow create a way for him to to, you know, create, like, buckets for saving schools. Like, oh, this this is my savings goal for... this is my savings goal for buying this toy, or this is my savings goal for flight school, or this is my savings goal for this thing. So I I need all this built in and and, you know, this is probably answering some of the questions that are to come, but I don't care."
+
+_Requirements captured from this answer:_
+- **Hero page = balance + "what can I earn this week."** Kid-enticing, not a bank statement.
+- **Transaction register is a drill-down view**, reached by tapping — "why did I get that, why did I spend that." Not the landing screen. (Corrects Claude's prior read.)
+- **Recurring tasks** (Acorns-style chores) **and one-off jobs** the kid can request when he wants extra money for a specific thing.
+- **Multiple named savings buckets/goals** with wildly different horizons — a toy vs. flight school.
+- **Saving must be incentivized**, not just permitted — the app should make saving feel rewarding rather than like withheld spending.
+- _Claude's recommendation (decided, not asked): parent-paid interest on goal balances, per Acorns' model — trivial to implement since settlement is manual._
+
+**Q4 (smallest version that proves it):** _pending_
