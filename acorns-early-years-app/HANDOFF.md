@@ -6,7 +6,7 @@ _Written 2026-07-26. Purpose: resume this project on Danielle's own computer wit
 
 ## ⬛ WHERE EVERYTHING IS — READ THIS FIRST
 
-**Nothing was saved to Google Drive. Nothing was saved to your local machine.** This session ran in a remote container with no access to either. **Everything lives in GitHub**, plus one session note in ClickUp.
+**Nothing was saved to Google Drive. Nothing was saved to your local machine.** This session ran in a remote container with no access to either. **Everything lives in GitHub**, plus a session note and a seeded task list in ClickUp.
 
 ### GitHub (the only copy of these files)
 
@@ -16,14 +16,14 @@ _Written 2026-07-26. Purpose: resume this project on Danielle's own computer wit
 | **Branch** | `claude/acorns-early-years-app-ltfjmh` ← NOT `main` |
 | **Folder** | `acorns-early-years-app/` (repo root) |
 
-Three files, all in that one folder:
+Four files, all in that one folder:
 
 | File | What it is |
 |---|---|
 | `HANDOFF.md` | **This file.** Start here. |
 | `KICKOFF_SYNTHESIS_acorns-early-years-app_2026-07-26.md` | Distilled synthesis |
 | `INTERVIEW_TRANSCRIPT_acorns-early-years-app_2026-07-26.md` | Full verbatim Q&A |
-| `SESSION_NOTES_2026-07-26.md` | Session note — **still needs pasting into ClickUp doc `8ckxy74-573`** |
+| `SESSION_NOTES_2026-07-26.md` | Session note (GitHub mirror; the ClickUp copy is authoritative) |
 
 ### To get it on your computer — copy/paste this
 
@@ -46,20 +46,11 @@ git checkout claude/acorns-early-years-app-ltfjmh
 **To read it in a browser without cloning:**
 `https://github.com/lprds/lprds.github.io/tree/claude/acorns-early-years-app-ltfjmh/acorns-early-years-app`
 
-### ClickUp
+### ClickUp — done, nothing outstanding
 
-**List created:** "Kids Money App (Acorns Early-style)" in the Claude CoWork Projects space (`901313736752`).
-List ID `1000450000004370` → https://app.clickup.com/9013491940/v/l/li/1000450000004370
-**It is empty** — task seeding was blocked (see below).
+**Session note:** page `SESSION_NOTES_2026-07-26` (`8ckxy74-13959`) in doc `8ckxy74-573`. Filed.
 
-### ⚠️ Blocked — needs your hand
-
-The ClickUp MCP server disconnected and reconnected mid-session under a new server ID, and its **write** tools now require an approval this non-interactive session can't prompt for. Two things didn't land:
-
-1. **The session note was not filed to ClickUp doc `8ckxy74-573`.** The full note is written and committed as `SESSION_NOTES_2026-07-26.md` in this folder — paste it in as a new page titled `SESSION_NOTES_2026-07-26`.
-2. **The ClickUp list is empty.** Suggested first tasks are listed in that session note under Open Items.
-
-(The list itself exists because that call went through *before* the reconnect.)
+**List:** [Kids Money App (Acorns Early-style)](https://app.clickup.com/9013491940/v/l/li/1000450000004370) — `1000450000004370`, in the Claude CoWork Projects space (`901313736752`). Seeded with six tasks — full table in §13.
 
 ### Not done — deliberately
 
