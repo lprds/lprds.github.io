@@ -305,3 +305,20 @@ Claude recommended ~8 hrs; **Danielle set 15**, explicitly buying option value o
 - ⚠️ **COPPA gate.** Deferred is correct for a household. But a friends-and-family pilot puts *other people's children's* data in the system. Revisit before the pilot goes beyond a handful of known families. Building data-minimal (D6) keeps that a paperwork problem rather than a schema rewrite.
 - ⚠️ **No hard kill switch.** Rejection converts to iteration (A9), which is the right instinct with his engagement but is also exactly how a project quietly eats 40 hours. The 15-hour ceiling is the only real spend discipline in place — hold it.
 - ⚠️ **Engagement is the top risk**, and it's the one that can't be engineered around. The son is a design stakeholder: build so screens are cheap to change after he reacts.
+
+---
+
+## 13. ClickUp — filed and seeded (2026-07-26)
+
+**Session note:** page `SESSION_NOTES_2026-07-26` (`8ckxy74-13959`) in doc `8ckxy74-573`. Filed — the earlier approval block cleared when the MCP server reconnected.
+
+**List:** [Kids Money App (Acorns Early-style)](https://app.clickup.com/9013491940/v/l/li/1000450000004370) — `1000450000004370`, seeded with six tasks:
+
+| Task | Priority | Note |
+|---|---|---|
+| [Reconcile data model against LPR/TFE accounting platform](https://app.clickup.com/t/wdwxndx46w) | High | **Blocks schema** |
+| [Collect chore list, amounts, payout cadence](https://app.clickup.com/t/wdwxndx46x) | High | Blocks a usable v0.1 |
+| [Decide: one parent approval or two?](https://app.clickup.com/t/wdwxndx46y) | Normal | Danielle's call |
+| [Name the app](https://app.clickup.com/t/wdwxndx46z) | Low | |
+| [Stand up Supabase](https://app.clickup.com/t/wdwxndx470) | Normal | Blocked by reconciliation |
+| [Build v0.1 — hold the 15-hour ceiling](https://app.clickup.com/t/wdwxndx471) | Normal | 15h estimate set |

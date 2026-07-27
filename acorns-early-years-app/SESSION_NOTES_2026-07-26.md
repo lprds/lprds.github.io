@@ -1,6 +1,6 @@
 # SESSION_NOTES_2026-07-26
 
-> ⚠️ **NOT YET FILED TO CLICKUP.** This note is meant to live as page `SESSION_NOTES_2026-07-26` in ClickUp doc `8ckxy74-573` (the authoritative session-notes store). The write was blocked — the ClickUp MCP server reconnected mid-session and its write tools now require an approval this non-interactive session can't prompt for. **Action: paste this file's contents into that doc as a new page.**
+> ✅ **FILED TO CLICKUP** as page `SESSION_NOTES_2026-07-26` (page id `8ckxy74-13959`) in doc `8ckxy74-573`, the authoritative session-notes store. This file is the GitHub mirror. The ClickUp copy is slightly fuller — it includes D12/D13/D14, added after this file was first written.
 
 Kickoff session for a new personal/R&D project: a kids money app for Danielle's 10-year-old son, modeled on Acorns Early (formerly GoHenry). Session ran remotely (Claude Code on the web, no local machine and no Drive mount), so **all artifacts live in GitHub, not Drive**.
 
