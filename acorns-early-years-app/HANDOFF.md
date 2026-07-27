@@ -1,4 +1,4 @@
-# HANDOFF — Kids Money App (Acorns Early-style)
+# HANDOFF — Pistachio (kids money app)
 
 _Written 2026-07-26. Purpose: resume this project on Danielle's own computer with **zero additional questions**. Everything decided in the kickoff session is captured here._
 
@@ -64,7 +64,7 @@ git checkout claude/acorns-early-years-app-ltfjmh
 
 ## 1. What this is, in one sentence
 
-A virtual family money ledger for Danielle's 10-year-old son: he earns money by completing tasks, sees his balance and a real transaction register, saves toward named goals, and requests purchases she approves — replacing an Acorns Early subscription (~$12/mo) and the in-head/notes/envelope tracking they use today.
+**Pistachio** is a virtual family money ledger for Danielle's 10-year-old son: he earns money by completing tasks, sees his balance and a real transaction register, saves toward named goals, and requests purchases she approves — replacing an Acorns Early subscription (~$12/mo) and the in-head/notes/envelope tracking they use today.
 
 ## 2. The thing that makes this different from Acorns
 
@@ -114,6 +114,9 @@ Sources: [App Store](https://apps.apple.com/us/app/acorns-early-kids-money-app/i
 | D12 | **Parent verification of task completions is required.** Kid checks off → lands in a parent Approvals queue → payout posts only on approval. Acorns has NO such flow; it pays on unverified self-report | Post-interview, Danielle |
 | D13 | **Multi-parent households.** More than one parent per household, all able to assign tasks. Acorns has a co-parent account; match it | Post-interview, Danielle |
 | D14 | **Auto-approve task completions after N days** (default 48h, household-configurable). Silence = yes. Protects the feedback loop when a parent is slow or remote. **Task completions ONLY — spend requests never auto-approve** | Post-interview, Danielle (Claude added the spend-request carve-out) |
+| D15 | **The app is called Pistachio.** | Post-interview, Danielle |
+| D16 | **One parent approval releases a payout.** No dual sign-off, even in a multi-parent household | Post-interview, Danielle |
+| D17 | **Three task cadences, not two:** `one_off`, `dow` (specific weekdays), `weekly` (once in the week, any day). Derived from Danielle's live Acorns setup | Post-interview, from screenshots |
 
 ### Differentiators vs Acorns (product angle — keep this list growing)
 
@@ -147,14 +150,24 @@ household_invites   id, household_id, role, token, invited_by,
                     -- co-parent invite flow (D13). Schema listed here; UI is
                     --    pass 2.
 
-tasks               id, household_id, kid_id, title, amount_cents,
-                    kind ('recurring'|'one_off'), schedule, active, created_at
+tasks               id, household_id, kid_id, title, amount_cents, active,
+                    cadence ('one_off'|'dow'|'weekly'),        -- D17
+                    dow smallint[] NULL,   -- cadence='dow' only. 0=Sun .. 6=Sat
+                    created_at
+                    -- 'one_off'  : claimable once, ever. No date.
+                    -- 'dow'      : one claimable instance per listed weekday
+                    --              (Danielle's "Put your clothes away" = {0,2,4,6})
+                    -- 'weekly'   : one claimable instance per ISO week, any day
 
 task_completions    id, household_id, task_id, kid_id, period_key,
                     completed_at, status ('pending'|'approved'|'declined'),
                     decided_by, decided_at
                     -- UNIQUE (task_id, period_key)  → a recurring task cannot be
                     --    claimed twice in the same period
+                    -- period_key by cadence:
+                    --    one_off → 'once'
+                    --    dow     → the ISO date      e.g. '2026-07-28'
+                    --    weekly  → ISO year-week     e.g. '2026-W31'
 
 spend_requests      id, household_id, kid_id, description, amount_cents,
                     goal_id NULL, status ('pending'|'approved'|'declined'),
@@ -186,7 +199,7 @@ The flow, precisely:
 
 `decided_by` gives a full audit trail of which parent approved what — which matters more once there's a co-parent.
 
-**Open question for Danielle (do not decide unilaterally):** in a two-parent household, does **one** parent's approval release the payout, or must **both** sign off? One-approval is the sane default and what Claude would build absent an answer, but it's a household-policy call, not a technical one.
+**Answered (D16): one parent approval releases the payout.** No dual sign-off, even with a co-parent on the household. `decided_by` still records which parent it was, so the audit trail survives.
 
 ### §6b — Auto-approve after N days (D14)
 
@@ -313,3 +326,56 @@ Claude recommended ~8 hrs; **Danielle set 15**, explicitly buying option value o
 | [Name the app](https://app.clickup.com/t/wdwxndx46z) | Low | |
 | [Stand up Supabase](https://app.clickup.com/t/wdwxndx470) | Normal | Blocked by reconciliation |
 | [Build v0.1 — hold the 15-hour ceiling](https://app.clickup.com/t/wdwxndx471) | Normal | 15h estimate set |
+
+---
+
+## 14. Seed data — Danielle's real Acorns setup (2026-07-26)
+
+Transcribed from screenshots of her live Acorns Early "Earning" screen. **This is the actual chore list to seed Pistachio with**, not an example.
+
+### One-off
+
+| Task | Amount |
+|---|---|
+| Build apps | $50.00 |
+
+### Day-specific (`cadence='dow'`)
+
+| Task | Amount | Days |
+|---|---|---|
+| Put your clothes away | $0.50 | Sat, Sun, Tue, Thu → `dow = {0,2,4,6}` |
+
+Acorns renders this as four separate dated rows (Sat Jul 25, Sun Jul 26, Tue Jul 28, Thu Jul 30). Same underlying task, one claimable instance per listed weekday — which is exactly why `period_key` is the ISO date for this cadence.
+
+### Weekly (`cadence='weekly'`)
+
+| Task | Amount |
+|---|---|
+| Water the plants | $1.00 |
+| Clean the litter box | $2.00 |
+| Take out the compost | $1.00 |
+| Do the vacuuming | $1.00 |
+
+### Weekly earning ceiling
+
+| Source | Math | Total |
+|---|---|---|
+| Put your clothes away | $0.50 × 4 days | $2.00 |
+| Weekly four | $1 + $2 + $1 + $1 | $5.00 |
+| **Recurring total** | | **$7.00/week** |
+
+$7.00 is the number the hero screen's "what can I earn this week" should show at a full week's start, counting down as instances are claimed. The $50 one-off sits outside the weekly rhythm.
+
+### UI notes lifted from the Acorns screens
+
+- Tasks are **grouped by date**, with weekday headers ("Sunday, July 26"), then a "Weekly" group, then "One-off" — chronological, not by task type.
+- A **"Tick all tasks"** bulk action sits top-right of each group.
+- Each row: checkbox, task title, amount, and a **"New"** badge on tasks not yet interacted with.
+- One primary action button pinned to the bottom (**"Add task"** on the parent side).
+
+Worth matching the grouping and the bulk-tick; both reduce friction for a 10-year-old. The "New" badge is a cheap engagement lever.
+
+### Still needed before seeding
+
+- **Payout cadence** — Acorns pays out on a schedule (weekly / twice monthly). Danielle hasn't said which she wants. Not in the screenshots.
+- **Auto-approve window** — default 48h stands unless she says otherwise.

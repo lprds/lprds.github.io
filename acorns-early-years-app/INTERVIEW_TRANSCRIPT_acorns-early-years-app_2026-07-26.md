@@ -158,3 +158,16 @@ _**D14 recorded.** Auto-approve task completions after N hours, household-config
 _**Claude's carve-out, added not asked:** auto-approve applies to `task_completions` ONLY. `spend_requests` must NEVER auto-approve — a chore auto-approving costs a few dollars Danielle likely owed anyway; a spend request auto-approving means money spent on her behalf she never agreed to. Different risk class._
 _Implementation decided: `pg_cron` sweep, not lazy read-time evaluation (a balance that moves because someone opened a screen is the silent-drift failure mode requirement #1 forbids). `auto_approved` flag with `decided_by` left NULL preserves the audit distinction between a parent saying yes and the clock saying yes. Auto-approvals surface in the parent feed and are flagged in the register — silence means yes, never hidden._
 _Notifications on check-off remain wanted (pass 2) as the real latency fix; auto-approve is the safety net beneath it._
+
+**Danielle (answering three open questions, with screenshots of her live Acorns "Earning" screen attached):** "One approval. Pistachio. Here are some tasks."
+
+_Three open items closed:_
+- **D15 — the app is named Pistachio.**
+- **D16 — one parent approval releases a payout.** No dual sign-off.
+- **Real chore list supplied** via screenshots — transcribed into `HANDOFF.md` §14 as seed data.
+
+_**D17 surfaced from the screenshots** (Claude, not asked): Acorns uses **three** cadences, not the two in Claude's original model. "Put your clothes away" renders as four separate dated rows (Sat/Sun/Tue/Thu) — a weekday-specific recurrence — while "Water the plants" etc. sit under a plain "Weekly" group with no date, and "Build apps" sits under "One-off". Claude's `kind ('recurring'|'one_off')` would have flattened the clothes task incorrectly. Model corrected to `cadence ('one_off'|'dow'|'weekly')` with a `dow` array, and `period_key` derived per cadence (`'once'` / ISO date / ISO year-week) so idempotency still holds._
+
+_Recurring weekly ceiling computed from the real data: **$7.00/week** ($0.50 × 4 clothes instances = $2.00, plus $1 + $2 + $1 + $1 weekly = $5.00), plus a $50 one-off ("Build apps"). This is the number the hero screen's "what can I earn this week" should display._
+
+_Still outstanding after this answer: **payout cadence** (weekly? twice monthly?) — not visible in the screenshots and not stated._
