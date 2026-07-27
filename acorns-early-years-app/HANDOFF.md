@@ -122,6 +122,7 @@ Sources: [App Store](https://apps.apple.com/us/app/acorns-early-kids-money-app/i
 | D11 | **Cost ceiling: 15 hours** of Danielle's time | A14 |
 | D12 | **Parent verification of task completions is required.** Kid checks off → lands in a parent Approvals queue → payout posts only on approval. Acorns has NO such flow; it pays on unverified self-report | Post-interview, Danielle |
 | D13 | **Multi-parent households.** More than one parent per household, all able to assign tasks. Acorns has a co-parent account; match it | Post-interview, Danielle |
+| D14 | **Auto-approve task completions after N days** (default 48h, household-configurable). Silence = yes. Protects the feedback loop when a parent is slow or remote. **Task completions ONLY — spend requests never auto-approve** | Post-interview, Danielle (Claude added the spend-request carve-out) |
 
 ### Differentiators vs Acorns (product angle — keep this list growing)
 
@@ -196,6 +197,34 @@ The flow, precisely:
 
 **Open question for Danielle (do not decide unilaterally):** in a two-parent household, does **one** parent's approval release the payout, or must **both** sign off? One-approval is the sane default and what Claude would build absent an answer, but it's a household-policy call, not a technical one.
 
+### §6b — Auto-approve after N days (D14)
+
+**Why it exists:** verified completions cost immediacy. He checks a chore off Tuesday; if a parent approves Friday, that's three days of a balance that didn't move — and a 10-year-old stops checking things off. This is sharpest right now, with Danielle and her son in separate households for ~2 months. Acorns dodged the problem by not verifying at all; this buys the verification back without the latency.
+
+**Rule:** a `task_completions` row in `status='pending'` for longer than the household's `auto_approve_hours` (default **48**) flips to `approved` and posts its payout exactly as a manual approval would.
+
+**Scope — this is the important part:**
+
+| Object | Auto-approves? | Why |
+|---|---|---|
+| `task_completions` | **Yes**, after N hours | Worst case is a few dollars Danielle likely owed anyway |
+| `spend_requests` | **NEVER** | Auto-approving means money spent on her behalf that she never agreed to. Different risk class entirely — must stay an affirmative act |
+
+**Schema additions:**
+```
+households          + auto_approve_hours  int default 48   -- 0 or NULL = disabled
+task_completions    + auto_approved       bool default false
+                    -- decided_by stays NULL when auto_approved = true, so the
+                    --    audit trail distinguishes "a parent said yes" from
+                    --    "the clock said yes"
+```
+
+**Implementation (decided, not asked):** a `pg_cron` job in Supabase sweeping overdue pendings. Do NOT compute this lazily at read time — a balance that changes because someone opened a screen is exactly the silent-drift failure mode requirement #1 forbids. The sweep posts real transactions; the ledger stays the single source of truth.
+
+**Not silent:** auto-approvals must show in the parent's feed ("3 completions auto-approved") and be visibly flagged in the register. Silence means yes, but it never means hidden.
+
+**Still worth doing later:** push/email on check-off, so approval is a 5-second tap. Auto-approve is the safety net; notifications are the actual fix for latency. Both, eventually.
+
 ## 7. Screen inventory
 
 **Kid app** (must be enticing — D3, requirement #4)
@@ -223,6 +252,10 @@ The flow, precisely:
 **Pass 2 — deferred but wanted (Danielle: "I need all this built in")**
 - Savings goals / named buckets ← **highest-value deferred item**; it's the savings incentive and Danielle raised it unprompted. Pull into v0.1 if hours allow.
 - **Co-parent invite flow** (D13) — schema supports N parents from day one; the invite UI and second-parent onboarding are pass 2.
+- **Push/email notification on check-off** — the real fix for approval latency; auto-approve (D14, in v0.1) is the safety net underneath it.
+
+**Pulled INTO v0.1 despite being small — because it protects the two-week trial**
+- **Auto-approve after N hours** (D14, §6b). Without it, a slow approval week kills engagement, and engagement is the one non-negotiable that can't be engineered around later. Cheap: one column, one `pg_cron` job.
 - One-off job requests
 - Spend-request flow
 - Parent-paid interest on goal balances (the "incentivize saving" mechanic)

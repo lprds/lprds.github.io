@@ -148,3 +148,13 @@ _Two features captured:_
 2. **Co-parent accounts (D13).** More than one parent per household, all able to assign tasks. Acorns has this. Structurally free in the existing model (`profiles` is household-scoped with a `role`), so N parents needs no schema change; the **invite flow and second-parent onboarding are new work**, scoped to pass 2. Added a `household_invites` table to the model.
 
 _New open question raised by D13, deliberately not decided:_ in a two-parent household, does **one** parent's approval release the payout or must **both** sign off? Household policy, not a technical call. Default if unanswered: one.
+
+**Claude (flagging a design tension after D12):** Verified completions trade away immediacy — he checks a chore off Tuesday, parent approves Friday, three days of a balance that didn't move, and a 10-year-old stops checking things off. Sharpest during the ~2 months they're in separate households. Offered three mitigations: push/email on check-off, auto-approve after N days, or trust tiers.
+
+**Danielle:** "I like audio approve after n days."
+_("audio" = dictation garble for "auto".)_
+
+_**D14 recorded.** Auto-approve task completions after N hours, household-configurable, default 48. Silence = yes. Pulled INTO v0.1 (not pass 2) because it protects the two-week engagement trial, and engagement is the one non-negotiable that can't be retrofitted._
+_**Claude's carve-out, added not asked:** auto-approve applies to `task_completions` ONLY. `spend_requests` must NEVER auto-approve — a chore auto-approving costs a few dollars Danielle likely owed anyway; a spend request auto-approving means money spent on her behalf she never agreed to. Different risk class._
+_Implementation decided: `pg_cron` sweep, not lazy read-time evaluation (a balance that moves because someone opened a screen is the silent-drift failure mode requirement #1 forbids). `auto_approved` flag with `decided_by` left NULL preserves the audit distinction between a parent saying yes and the clock saying yes. Auto-approvals surface in the parent feed and are flagged in the register — silence means yes, never hidden._
+_Notifications on check-off remain wanted (pass 2) as the real latency fix; auto-approve is the safety net beneath it._
