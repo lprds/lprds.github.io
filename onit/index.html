@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <title>On It — the household list that does the reminding</title>
+  <meta name="description" content="A shared household list for couples. One partner asks, the other agrees and picks when, and the list does the reminding instead of the spouse." />
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#131110" media="(prefers-color-scheme: dark)" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="On It" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" href="icons/icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;550;600;650;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div id="root">
+    <!-- First paint before the script boots: a skeleton, never a blank screen. -->
+    <div class="setup">
+      <div class="setup-card" aria-busy="true">
+        <div class="skeleton">
+          <div class="sk short"></div>
+          <div class="sk"></div>
+          <div class="sk short"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+  <noscript>
+    <div class="setup">
+      <div class="setup-card">
+        <h2>On It needs JavaScript</h2>
+        <p class="lede">This app runs entirely in your browser and needs JavaScript switched on.</p>
+      </div>
+    </div>
+  </noscript>
+
+  <script src="app.js"></script>
+</body>
+</html>
