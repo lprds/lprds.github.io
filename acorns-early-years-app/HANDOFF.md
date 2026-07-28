@@ -58,7 +58,7 @@ git checkout claude/acorns-early-years-app-ltfjmh
 
 ---
 
-**Status: kickoff complete. No code written yet.** Nothing has been built, no Supabase project exists, no schema applied.
+**Status (updated 2026-07-28): database foundation built and verified.** The v0.1 schema, ledger logic, RLS, and auto-approve cron are deployed and smoke-tested in Supabase. No front end yet, and no real household seeded yet (that waits on the kid-auth flow). See **§16 Build log**.
 
 ---
 
@@ -332,6 +332,28 @@ Claude recommended ~8 hrs; **Danielle set 15**, explicitly buying option value o
 | [Name the app](https://app.clickup.com/t/wdwxndx46z) | Low | |
 | [Stand up Supabase](https://app.clickup.com/t/wdwxndx470) | Normal | Blocked by reconciliation |
 | [Build v0.1 — hold the 15-hour ceiling](https://app.clickup.com/t/wdwxndx471) | Normal | 15h estimate set |
+
+---
+
+## 16. Build log — database foundation (2026-07-28)
+
+**Where it lives:** Supabase base **`onit-household`** (project ref `jelaeunuqsqdekftrlup`, org LPR Business Services, us-west-1), schema **`pistachio`**. It is *not* its own project — the free tier caps at 2 active projects and Danielle's standing rule is to co-locate new builds in an existing base under a dedicated schema, not spin up a project per build. The `pistachio` schema is fully isolated from onit-household's own `public.*` tables (which independently have `households`/`tasks` — hence the dedicated schema). Lifting it to its own project at productization is a `pg_dump` of one schema (D22).
+
+**Migrations applied (Supabase migration history):**
+| Migration | Contents |
+|---|---|
+| `pistachio_01_core_schema` | 8 tables per §6 (households, profiles, household_invites, goals, tasks, task_completions, spend_requests, transactions) + all constraints/indexes. Integer cents; `UNIQUE(task_id, period_key)` and `UNIQUE(source_type, source_id)` idempotency guards |
+| `pistachio_02_ledger_logic` | Approval→payout trigger, spend→debit trigger, terminal-decision guard, **append-only immutability** trigger on transactions (D20), derived `balances` view (security_invoker) |
+| `pistachio_03_rls` | RLS on all 8 tables; `current_household()`/`is_parent()` helpers (SECURITY DEFINER); parent-vs-kid policies; posting functions made SECURITY DEFINER; `authenticated` grants (no update/delete grant on transactions at all) |
+| `pistachio_04_auto_approve_cron` | `pg_cron` + `sweep_auto_approve()` + job `pistachio_auto_approve` every 15 min (§6b/D14) |
+| `pistachio_05_pin_guard_search_path` | Pinned `search_path` on the two guard functions (security-advisor hygiene) |
+
+**Verified 2026-07-28 (throwaway data, cleaned up):** manual approval posts one payout; a repeated approval does NOT double-post (idempotency); auto-approve sweeps a 50h-old pending to approved with `auto_approved=true` / `decided_by=NULL`; derived balance view = 400¢ = sum of transactions; UPDATE and DELETE on transactions are both rejected. Security advisor: clean on `pistachio` (the remaining `public.*` RLS-no-policy notices belong to onit-household's own app, not Pistachio).
+
+**Next (not yet built):**
+1. **Kid-auth flow** — the one real open design item. Kid has no email (D6); parent provisions the account. Needs a concrete Supabase Auth mechanism (parent-provisioned credential / PIN / magic link the parent holds). Blocks real seeding, because profiles require `auth.users` rows.
+2. **Seed the real household** (Danielle=parent, son=kid) + §14 chore list — after #1.
+3. **Front end** — static on GitHub Pages (D22), Supabase JS client, RLS-scoped. Kid app (Home/Tasks/Ledger) + parent app (Dashboard/Approvals/Task admin/CSV export) per §7–§8. Keep all logic in the DB (Invariant 1) — the page only reads/writes rows.
 
 ---
 
