@@ -64,7 +64,11 @@ git checkout claude/acorns-early-years-app-ltfjmh
 
 ## 1. What this is, in one sentence
 
-**Pistachio** is a virtual family money ledger for Danielle's 10-year-old son: he earns money by completing tasks, sees his balance and a real transaction register, saves toward named goals, and requests purchases she approves — replacing an Acorns Early subscription (~$12/mo) and the in-head/notes/envelope tracking they use today.
+**Pistachio teaches children financial literacy.** It is not a ledger app that happens to teach — the ledger is *infrastructure* for the lesson, not the point. A child learns money by living three mechanics: **earn by doing** (complete tasks → get paid), **earn by saving** (money grows when left alone — parent-paid interest/compounding, goals with targets), and **learn by lessons** (Money Missions-style lessons that pay out bonus cash + XP/badges). A real transaction register with a running balance is how the child *sees* all three work — cause and effect made visible.
+
+First tenant is Danielle's 10-year-old son; it replaces an Acorns Early subscription (~$12/mo) and the in-head/notes/envelope tracking they use today. It is multi-tenant from day one (D1) and may become an LPR product.
+
+**Correction (Danielle, this session):** an earlier draft framed the goal as "teaching what a ledger is." That reduced it. The goal is childhood financial literacy across the three pillars above; the ledger is one surface, not the thesis. See D19.
 
 ## 2. The thing that makes this different from Acorns
 
@@ -117,6 +121,8 @@ Sources: [App Store](https://apps.apple.com/us/app/acorns-early-kids-money-app/i
 | D15 | **The app is called Pistachio.** | Post-interview, Danielle |
 | D16 | **One parent approval releases a payout.** No dual sign-off, even in a multi-parent household | Post-interview, Danielle |
 | D17 | **Three task cadences, not two:** `one_off`, `dow` (specific weekdays), `weekly` (once in the week, any day). Derived from Danielle's live Acorns setup | Post-interview, from screenshots |
+| D18 | **Payout posts per approval, immediately** — no batched weekly/twice-monthly payout schedule. Each approved completion posts its own transaction the moment it's approved, so cause and effect stays visible | This session, Danielle |
+| D19 | **Product thesis = childhood financial literacy**, across three pillars: earn by doing, earn by saving (interest/compounding), learn by lessons. The ledger is infrastructure for the lesson, not the goal. Corrects an earlier "teach what a ledger is" framing | This session, Danielle |
 
 ### Differentiators vs Acorns (product angle — keep this list growing)
 
@@ -329,6 +335,60 @@ Claude recommended ~8 hrs; **Danielle set 15**, explicitly buying option value o
 
 ---
 
+## 15. Reconciliation vs the Construction Accounting System (§10 gate — done 2026-07-27)
+
+The §10 pre-schema gate: reconcile this data model against the **Construction Accounting System** PRD (`Claude Cowork/Construction Accounting System/PRD_construction-accounting-system_v0.1_2026-07-17.md`), the in-progress LPR/TFE accounting platform Danielle flagged as sharing ledger/transaction concepts.
+
+**What that system is:** a real double-entry GAAP general ledger for TFE — `companies → accounts (COA) → journal_entries → journal_lines`, with a **DB-level `sum(debit)=sum(credit)` check per entry**, append-only posting (voids/reversals only, `reversal_of_entry_id`, no hard deletes), a full `audit_log` (jsonb diff), and balances derived from `journal_lines`, never stored. It exists to tie out to Xero, job-cost payroll, and satisfy an auditor.
+
+### Verdict: share the *integrity principles*, not the double-entry *structure*
+
+| Concept | Construction system | Pistachio | Reconciliation |
+|---|---|---|---|
+| **Tenancy** | `company_id` on every row + RLS | `household_id` on every row + RLS | **Same pattern.** Identical RLS discipline; different tenant noun. Aligned. |
+| **Balance** | Derived from journal_lines; never stored | `SUM(transactions.amount_cents)`; never stored | **Aligned** — same rule, same reason (stored balances drift). |
+| **Idempotency** | DB-enforced, not app logic | `UNIQUE(source_type, source_id)` in DB | **Aligned** — same principle; Pistachio already DB-enforces it. |
+| **Append-only** | Void/reverse only, no hard deletes, audit trail | *Not previously specified* | **ADOPT from construction (gap closed below, D20).** |
+| **Entry structure** | Double-entry: balanced debits+credits across a COA | Single-entry: one signed `amount_cents` per row | **Deliberate divergence (D21).** See rationale. |
+| **Chart of accounts** | `accounts` table, 5 GAAP types | Transaction `type` enum only | **Divergence** — no COA. A 10-year-old has one account (his balance); a COA teaches nothing here. |
+| **Backend / Auth** | Supabase (Postgres + Auth) | Supabase (Postgres + Auth) | **Aligned.** Same backend, same RLS model. |
+| **Frontend / host** | Next.js/React on Railway | GitHub Pages static + Supabase JS (D5) | **Open decision (see chat) — recommend keep static.** |
+
+### Why single-entry is correct for Pistachio (D21)
+
+Double-entry exists to keep many accounts balanced (assets = liabilities + equity) and to tie out to a counterparty's books. Pistachio has **no money movement** (D2) and effectively **one account per kid**. The other side of every transaction is "the parent's pocket," which is deliberately out of system. Forcing double-entry would add a contra "parent owes" account for zero teaching value to a 10-year-old and zero reconciliation need. A signed running balance is the right teaching primitive: he sees a number go up when he earns and down when he spends, cause and effect on one line.
+
+**Revisit trigger:** if Pistachio ever has to consolidate into real accounting (becomes the LPR product of D1 *and* is pitched as connecting to actual books), single-entry won't roll up. Migration path exists — treat each signed transaction as one leg and backfill contra entries — but it's a real project. Not now.
+
+### Principle adopted from the construction system → D20
+
+**Transactions are append-only and immutable once posted.** A wrong or reversed payout is corrected by posting a **reversing transaction** (`type='adjustment'`, `source_type='reversal'`, `source_id`=the original transaction id), never by editing or deleting the original. This hardens requirement #1 (ledger never miscounts) and #3 (no unnoticed payouts) with the same discipline the real GL uses. A full `audit_log` table is *not* adopted — for a single-balance kids' ledger, an immutable append-only `transactions` table that records `source` and `created_by` on every row *is* the audit trail; a jsonb-diff log would be overkill. Proportionate divergence.
+
+### Two new decisions from this reconciliation
+
+| # | Decision | Source |
+|---|---|---|
+| D20 | **Transactions are append-only/immutable; corrections are reversing entries, never edits or deletes.** Adopted from the Construction Accounting System's ledger discipline | §15 reconciliation |
+| D21 | **Pistachio stays single-entry (signed ledger), not double-entry.** Shares the construction system's *integrity principles* (derived balance, DB-enforced idempotency, append-only) but not its journal/COA structure. Money movement is out of scope (D2), so there is no second set of books to balance | §15 reconciliation |
+
+### Danielle's ruling (2026-07-27): keep it simple now — on the condition it doesn't force a full rebuild at productization
+
+Both recommendations accepted **with the constraint** that simple-now must not mean rebuild-later. It doesn't have to — provided the build holds these three invariants. They are cheap now and are the entire difference between "add a new skin / backfill a table" and "start over." **These are hard build constraints on v0.1, not aspirations.**
+
+**Invariant 1 — All ledger integrity and business logic lives in Postgres/Supabase, never in front-end JS.** Payout posting, the idempotency constraints, auto-approve (pg_cron), and RLS scoping are database-level (constraints, triggers, functions, pg_cron, RLS) — plus Supabase edge functions where server logic is needed. *Consequence:* the GitHub Pages static front end is a **disposable skin**. Productizing = build a Next.js/Railway front end against the *same* Supabase database. That's a new UI, not a new system. If business logic leaks into browser JS, this guarantee breaks — that's the one thing the v0.1 build must not do for convenience.
+
+**Invariant 2 — Transactions stay append-only and immutable, with full provenance and a semantic type.** Every row keeps `source_type` + `source_id` and a meaningful `type` (`task_payout`|`spend`|`interest`|`gift`|`adjustment`). *Consequence:* the single-entry → double-entry promotion (if Pistachio ever plugs into real accounting) is a **mechanical backfill** — each existing transaction becomes one leg, and its `type` already determines the contra account for the second leg. It is not a re-derivation of lost history. (This is why D20's append-only rule is load-bearing, not bureaucratic.)
+
+**Invariant 3 — Money as integer cents; balance always derived, never stored.** No lossy or drifting representation to unwind at productization; the ledger is the single source of truth on day one and stays it.
+
+Hold these and "simple" and "productizable" are the same design, not a trade. Break any one and productization becomes the rebuild Danielle is trying to avoid.
+
+| # | Decision | Source |
+|---|---|---|
+| D22 | **Stack stays simple: GitHub Pages static front end + Supabase (Postgres/Auth/RLS/pg_cron/edge functions).** Not Next.js/Railway — that's reserved for the productization skin. Conditioned on the three productization-safety invariants above | This session, Danielle |
+
+---
+
 ## 14. Seed data — Danielle's real Acorns setup (2026-07-26)
 
 Transcribed from screenshots of her live Acorns Early "Earning" screen. **This is the actual chore list to seed Pistachio with**, not an example.
@@ -377,5 +437,5 @@ Worth matching the grouping and the bulk-tick; both reduce friction for a 10-yea
 
 ### Still needed before seeding
 
-- **Payout cadence** — Acorns pays out on a schedule (weekly / twice monthly). Danielle hasn't said which she wants. Not in the screenshots.
+- ~~**Payout cadence**~~ — **RESOLVED (D18): payout posts per approval, immediately.** No batched schedule. Each approved completion posts its own transaction on approval.
 - **Auto-approve window** — default 48h stands unless she says otherwise.
