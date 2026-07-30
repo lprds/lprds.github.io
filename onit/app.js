@@ -384,8 +384,17 @@
         case 'task.save': {
           const input = payload.task;
           const existing = find(input.id);
-          if (existing) Object.assign(existing, input);
-          else {
+          if (existing) {
+            const oldOwner = existing.owner_id;
+            Object.assign(existing, input);
+            if ((existing.status === 'open' || existing.status === 'requested') && existing.owner_id !== oldOwner) {
+              if (existing.owner_id && existing.owner_id !== meId) {
+                existing.status = 'requested'; existing.requested_by = meId; existing.decline_reason = null;
+              } else {
+                existing.status = 'open'; existing.requested_by = null;
+              }
+            }
+          } else {
             const isAsk = input.owner_id && input.owner_id !== meId;
             snap.tasks.push({
               notes: '', steps: [], defer_count: 0, nudge_count: 0,
@@ -621,7 +630,7 @@
       s.screen === 'welcome' && h('div', { class: 'why' },
         h('h3', { text: 'How it works' }),
         h('ul', {},
-          h('li', { text: 'Asking someone creates a request, not an order — they say yes and pick when.' }),
+          h('li', { text: 'Asking someone creates a request, not an order. They say yes and pick when.' }),
           h('li', { text: 'Everything is written down in one place, so nothing depends on remembering.' }),
           h('li', { text: 'The list does the reminding, so neither of you has to.' }),
           h('li', { text: 'Nothing gets marked late or scolds anyone. Moving something is one tap.' }),
@@ -738,7 +747,7 @@
           'aria-invalid': String(!!s.error),
           oninput: (e) => { f.code = e.target.value; },
         }),
-        h('span', { class: 'hint', text: 'Capital letters and dashes — we ignore the difference.' }),
+        h('span', { class: 'hint', text: 'Capital letters and dashes do not matter.' }),
       ),
       s.error && h('p', { class: 'error-text' }, icon('alert', 14), s.error),
       h('button', {
@@ -841,7 +850,7 @@
       h('h2', { text: "You're set up" }),
       h('p', { class: 'lede', text: 'Share this code with the people in your household. They enter it once on their own phone.' }),
       h('div', { class: 'code-card' },
-        h('div', { class: 'code', text: code || '—' }),
+        h('div', { class: 'code', text: code || '...' }),
         h('p', { class: 'cap', text: 'Anyone with this code can join your household list, so share it the way you would a house key.' }),
       ),
       h('button', {
@@ -881,7 +890,7 @@
     return h('header', { class: 'topbar' },
       h('button', {
         class: 'home', onclick: () => { state.view = 'today'; render(); },
-        'aria-label': 'On It — go to Today',
+        'aria-label': 'On It, go to Today',
       },
         h('span', { class: 'wordmark', text: 'On It' }),
         h('span', { class: 'household-name', text: snap.household.name }),
@@ -1221,7 +1230,7 @@
       add(node, h('div', { class: 'ask-actions' },
         h('button', {
           class: 'btn btn-primary', onclick: () => openAcceptSheet(task.id),
-        }, icon('check'), "Yes — I'll pick a time"),
+        }, icon('check'), "Yes, I'll pick a time"),
         h('button', {
           class: 'btn', onclick: () => openDeclineSheet(task.id),
         }, 'Not this one'),
@@ -1232,7 +1241,7 @@
       add(node, h('div', { class: 'ask-actions' },
         h('button', {
           class: 'btn btn-sm', 'aria-disabled': String(!canNudge),
-          title: canNudge ? 'Flag this once — it shows on their board' : 'Already flagged today',
+          title: canNudge ? 'Flag this once. It shows on their board' : 'Already flagged today',
           onclick: () => {
             enqueue('task.nudge', { id: task.id });
             toast('Flagged on their board. That\'s the last one today.', 'ok');
@@ -1373,7 +1382,7 @@
             `${r.member.name} · ${r.n}`)),
         ),
         h('p', { class: 'sub', style: 'margin-top:.5rem;color:var(--faint)',
-          text: 'A picture of the week, not a scoreboard — some jobs are ten minutes and some are all afternoon.' }),
+          text: 'A picture of the week, not a scoreboard. Some jobs are ten minutes and some are all afternoon.' }),
       ));
     }
 
@@ -1488,6 +1497,10 @@
     const d = s.draft;
     const me = myId(snap);
     const isAsk = d.owner_id && d.owner_id !== me;
+    // A reassignment to someone else is a fresh ask (create, or an edit that
+    // changes the owner), so it gets the request framing, not a silent save.
+    const original = s.editing && d.id ? snap.tasks.find((t) => t.id === d.id) : null;
+    const reassigning = isAsk && (!s.editing || (original && original.owner_id !== d.owner_id));
 
     const rerender = () => { state.sheet = { ...s }; render(); };
 
@@ -1517,7 +1530,7 @@
             onclick: () => { d.owner_id = null; rerender(); }, text: 'Anyone',
           }),
         ),
-        isAsk && !s.editing && h('span', { class: 'hint' },
+        reassigning && h('span', { class: 'hint' },
           `This goes to ${nameOf(snap, d.owner_id)} as a request. They choose when, and it lands on their list once they say yes.`),
       ),
 
@@ -1557,7 +1570,7 @@
             text: minutesLabel(m),
           })),
         ),
-        h('span', { class: 'hint', text: 'An estimate makes it findable later — "I have 15 minutes, what fits?"' }),
+        h('span', { class: 'hint', text: 'An estimate makes it findable later. "I have 15 minutes, what fits?"' }),
       ),
 
       h('div', { class: 'field' },
@@ -1592,7 +1605,7 @@
       h('label', { class: 'field' },
         h('span', { class: 'label', text: 'Notes' }),
         h('textarea', {
-          class: 'textarea', maxlength: 2000, placeholder: 'Anything that helps — a phone number, where the thing is kept.',
+          class: 'textarea', maxlength: 2000, placeholder: 'Anything that helps, like a phone number or where the thing is kept.',
           value: d.notes, oninput: (e) => { d.notes = e.target.value; },
         }),
       ),
@@ -1620,12 +1633,12 @@
         task: { ...d, title, steps: d.steps.filter((st) => st.text.trim()) },
       });
       closeSheet();
-      toast(s.editing ? 'Saved.' : (isAsk ? `Asked ${nameOf(snap, d.owner_id)}.` : 'Added.'), 'ok');
+      toast(reassigning ? `Asked ${nameOf(snap, d.owner_id)}.` : (s.editing ? 'Saved.' : 'Added.'), 'ok');
     };
 
-    return sheet(s.editing ? 'Edit' : (isAsk ? 'Ask for something' : 'Add something'), body, [
+    return sheet(reassigning ? 'Ask for something' : (s.editing ? 'Edit' : 'Add something'), body, [
       h('button', { class: 'btn', onclick: closeSheet, text: 'Cancel' }),
-      h('button', { class: 'btn btn-primary', onclick: submit, text: s.editing ? 'Save' : (isAsk ? 'Send the ask' : 'Add it') }),
+      h('button', { class: 'btn btn-primary', onclick: submit, text: reassigning ? 'Send the ask' : (s.editing ? 'Save' : 'Add it') }),
     ]);
   }
 
@@ -1651,7 +1664,7 @@
 
     const body = h('div', {},
       h('p', { class: 'lede', style: 'margin-top:0;color:var(--muted)',
-        text: `${nameOf(snap, task.requested_by)} asked. You pick the when — that's the whole point.` }),
+        text: `${nameOf(snap, task.requested_by)} asked. You pick the when. That's the whole point.` }),
       h('div', { class: 'ask', style: 'margin-bottom:1.2rem' },
         h('div', { class: 'ask-title', text: task.title }),
         task.notes && h('p', { class: 'task-notes', text: task.notes }),
@@ -1693,7 +1706,7 @@
       ),
     );
 
-    return sheet("Yes — here's when", body, [
+    return sheet("Yes, here's when", body, [
       h('button', { class: 'btn', onclick: closeSheet, text: 'Back' }),
       h('button', {
         class: 'btn btn-primary',
@@ -1728,7 +1741,7 @@
       h('label', { class: 'field' },
         h('span', { class: 'label', text: 'Why not? (optional)' }),
         h('input', {
-          class: 'input', maxlength: 300, placeholder: "Can't this week — swamped at work",
+          class: 'input', maxlength: 300, placeholder: "Can't this week, swamped at work",
           oninput: (e) => { s.reason = e.target.value; },
         }),
       ),
@@ -1794,7 +1807,7 @@
             })),
         ),
         task.defer_count >= 3 && h('p', { class: 'hint',
-          text: `This has moved ${task.defer_count} times. That usually means it's too big, too vague, or not really wanted — worth a two-minute talk rather than another move.` }),
+          text: `This has moved ${task.defer_count} times. That usually means it's too big, too vague, or not really wanted. Worth a two-minute talk rather than another move.` }),
       ),
 
       task.est_minutes && task.status !== 'done' && h('div', { class: 'sheet-section' },
@@ -1839,14 +1852,14 @@
       case 'created': return `${who} added it`;
       case 'requested': return `${who} asked for it`;
       case 'accepted': return `${who} agreed${e.detail?.due_on ? ` for ${humanDay(e.detail.due_on)}` : ''}`;
-      case 'declined': return `${who} passed${e.detail?.reason ? ` — "${e.detail.reason}"` : ''}`;
+      case 'declined': return `${who} passed${e.detail?.reason ? `: "${e.detail.reason}"` : ''}`;
       case 'completed': return `${who} finished it`;
       case 'reopened': return `${who} put it back`;
       case 'deferred': return `${who} moved it to ${humanDay(e.detail?.to)}`;
       case 'nudged': return `${who} flagged it`;
       case 'thanked': return `${who} said thanks`;
       case 'edited': return `${who} edited it`;
-      default: return `${who} — ${e.kind}`;
+      default: return `${who}: ${e.kind}`;
     }
   }
 
@@ -1996,7 +2009,7 @@
           h('button', {
             class: 'btn btn-sm', style: 'margin-top:.7rem',
             onclick: () => navigator.clipboard?.writeText(snap.household.code)
-              .then(() => toast('Code copied', 'ok'), () => toast('Copy it by hand — clipboard is blocked here.')),
+              .then(() => toast('Code copied', 'ok'), () => toast('Copy it by hand. The clipboard is blocked here.')),
           }, icon('copy'), 'Copy code'),
         ),
         h('div', { class: 'field', style: 'margin-top:1rem' },
@@ -2237,7 +2250,7 @@
         h('button', { class: 'btn btn-primary', onclick: () => { state.loadError = null; render(); refresh(); } },
           icon('repeat'), 'Try again'),
         h('details', {}, h('summary', { text: 'Still stuck?' }),
-          h('p', { text: 'You can unlink this device and rejoin with your household code — nothing on the shared list is lost.' }),
+          h('p', { text: 'You can unlink this device and rejoin with your household code. Nothing on the shared list is lost.' }),
           h('button', { class: 'btn btn-sm btn-danger', onclick: () => signOut(false), text: 'Unlink this device' })),
       ),
     );
