@@ -351,6 +351,8 @@ Claude recommended ~8 hrs; **Danielle set 15**, explicitly buying option value o
 
 **Verified 2026-07-28 (throwaway data, cleaned up):** manual approval posts one payout; a repeated approval does NOT double-post (idempotency); auto-approve sweeps a 50h-old pending to approved with `auto_approved=true` / `decided_by=NULL`; derived balance view = 400¢ = sum of transactions; UPDATE and DELETE on transactions are both rejected. Security advisor: clean on `pistachio` (the remaining `public.*` RLS-no-policy notices belong to onit-household's own app, not Pistachio).
 
+**RLS adversarially verified 2026-07-29 — 14/14 PASS.** Two throwaway households, attacks run under the real `authenticated` role with simulated JWT claims: kid cannot read another household's rows or a sibling's transactions; kid cannot self-approve, gift himself money, update/delete ledger rows, create tasks, claim as a sibling, or change the auto-approve window; parent is scoped to their own household and cannot approve another household's claims. Positive paths confirmed under RLS: kid can claim his own task; parent approval posts the payout and the parent can see it. **The RLS gate on seeding real data is cleared** — seeding now waits only on the kid-auth decision.
+
 **Next (not yet built):**
 1. **Kid-auth flow** — the one real open design item. Kid has no email (D6); parent provisions the account. Needs a concrete Supabase Auth mechanism (parent-provisioned credential / PIN / magic link the parent holds). Blocks real seeding, because profiles require `auth.users` rows.
 2. **Seed the real household** (Danielle=parent, son=kid) + §14 chore list — after #1.
