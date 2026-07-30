@@ -262,8 +262,10 @@
   </div>
 
   <script>
-    const ENDPOINT = "https://n8n-production-d34f.up.railway.app/webhook/recall-query-b81f4e6d";
-    const TIMEOUT_MS = 90000;
+    const ENDPOINT = "https://n8n-production-d34f.up.railway.app/webhook/recall-query-v2-c47d20a1";
+    const TIMEOUT_MS = 170000;
+    const SESSION_ID = (sessionStorage.getItem("lpr_recall_sid") || (() => { const v = "s-" + Math.random().toString(36).slice(2); sessionStorage.setItem("lpr_recall_sid", v); return v; })());
+    const chatHistory = [];
 
     const gate = document.getElementById("gate");
     const pwInput = document.getElementById("pw");
@@ -305,6 +307,8 @@
       let html = esc(data.answer || "(no answer)");
       // bold
       html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      // markdown links
+      html = html.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
       // [S3] citation chips
       html = html.replace(/\[S(\d+)\]/g, '<span class="cite">S$1</span>');
       let block = html;
@@ -356,7 +360,7 @@
         const res = await fetch(ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ password: getPw(), question }),
+          body: JSON.stringify({ password: getPw(), question, session_id: SESSION_ID, history: chatHistory.slice(-10) }),
           signal: ctrl.signal,
         });
         clearTimeout(timer);
@@ -371,10 +375,12 @@
         }
         const data = await res.json();
         renderAnswer(botB, data);
+        chatHistory.push({ role: "user", content: question });
+        chatHistory.push({ role: "assistant", content: data.answer || "" });
       } catch (e) {
         clearTimeout(timer);
         botB.textContent = e.name === "AbortError"
-          ? "That search took too long (90s). Try a narrower question."
+          ? "That search took too long. Try a narrower question."
           : "Couldn't reach the backend. Check your connection and try again.";
       } finally {
         send.disabled = false;
