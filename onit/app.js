@@ -310,13 +310,13 @@
           }
           state.status = err instanceof ApiError && err.status === 0 ? 'offline' : 'error';
           state.lastError = err.message;
-          render();
+          if (!editing()) render();
           return;
         }
       }
       state.status = 'idle';
       state.lastError = null;
-      render();
+      if (!editing()) render();
       refresh();
     } finally {
       flushing = false;
@@ -346,6 +346,16 @@
     save(KEY.snapshot, snap);
   }
 
+  /** True while the person is mid-edit: a sheet is open or a field has focus.
+   *  A background sync must never repaint out from under them — rebuilding the
+   *  DOM destroys the focused input, which on a phone dismisses the keyboard
+   *  and jumps the page to the top. Data still lands; the screen catches up at
+   *  the next user-driven render or the first poll after they finish. */
+  function editing() {
+    const a = document.activeElement;
+    return !!state.sheet || !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+  }
+
   async function refresh() {
     if (!state.token) return;
     // A poll must never stomp on work that hasn't been accepted by the server.
@@ -357,12 +367,12 @@
       state.status = 'idle';
       if (data.me.kiosk && !state.acting) state.acting = data.me.memberId;
       save(KEY.snapshot, data);
-      render();
+      if (!editing()) render();
     } catch (err) {
       if (err instanceof ApiError && err.code === 'unauthenticated') return signOut(true);
       state.status = err instanceof ApiError && err.status === 0 ? 'offline' : 'error';
       if (!state.snapshot) state.loadError = err.message;
-      render();
+      if (!editing()) render();
     }
   }
 
