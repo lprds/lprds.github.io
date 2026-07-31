@@ -2195,6 +2195,14 @@
 
   function render() {
     applyChrome();
+    // Rebuilding the DOM resets scroll, which reads as the page "jumping to the
+    // top" on every tap. Capture scroll before the rebuild and restore it after,
+    // unless the person actually navigated (new view / sheet opened or closed) —
+    // a genuinely new screen should still start at the top.
+    const scrollKey = `${state.view}|${state.sheet ? state.sheet.kind : ''}|${state.token ? 'in' : 'out'}`;
+    const winY = window.scrollY;
+    const sheetBody = document.querySelector('.sheet-body');
+    const sheetY = sheetBody ? sheetBody.scrollTop : 0;
     const frag = document.createDocumentFragment();
 
     // The "here's your code" screen has to survive the token existing, or the
@@ -2230,6 +2238,13 @@
     }
 
     el.root.replaceChildren(frag);
+
+    if (render._key === scrollKey) {
+      window.scrollTo(0, winY);
+      const nb = document.querySelector('.sheet-body');
+      if (nb) nb.scrollTop = sheetY;
+    }
+    render._key = scrollKey;
   }
 
   function bootSkeleton() {
