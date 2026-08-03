@@ -120,8 +120,9 @@ A small number of things genuinely cannot slip — the school form, the DMV
 appointment, the thing with a late fee.
 
 - An ask can be marked **"this one has a real deadline"**, with a date.
-- **Cap: two active per household.** Hard, enforced, not a suggestion. A third
-  attempt says: *"You've got two already. Which one stops being a hard deadline?"*
+- **Cap: three active per household** (Danielle, 2026-08-02: two was too austere
+  for a house with kids). Hard, enforced, not a suggestion. A fourth attempt
+  says: *"You've got three already. Which one stops being a hard deadline?"*
   The cap is the feature — the value of the lane is entirely in its scarcity,
   and an uncapped version becomes "everything is urgent" within a fortnight,
   which is where every other app lands.
@@ -301,12 +302,18 @@ prefs.digest    = false
 prefs.digestAt  = '07:30'
 ```
 
-**Phase 2** (only if she wants it after living with the card): one push
-notification a day carrying the digest, plus the hard-deadline pushes from §1.
-Deliberately deferred — a card she opens is strictly safer than a notification
-that trains either of them to swipe the app away, and the card may well be
-enough. The guardrail against notifications is about *stacking* and *shame*, and
-one summary a day to a person who asked for it is neither.
+**Phase 2** (decided 2026-08-02): delivery becomes the user's choice — in-app
+card or one push notification a day — **defaulting to card**, plus the
+hard-deadline pushes from §1. The guardrail against notifications is about
+*stacking* and *shame*, and one summary a day to a person who asked for it is
+neither.
+
+**Phase 2 also moves digest prefs (and the other per-person prefs) to the
+member record server-side.** Phase 1 stores them in localStorage, which makes
+them per-device: turn the digest on on your phone and your laptop doesn't know,
+dismiss it on one and it still shows on the other. Danielle flagged this
+directly — the preference belongs to the person and must follow them across
+devices. Client keeps localStorage as the offline cache of the synced value.
 
 ---
 
@@ -398,14 +405,15 @@ by-category load picture (deliberately by category, never by person).
 - `sw.js` `VERSION` → `onit-v4`.
 - No new dependencies. No build step. Same as it ever was.
 
-## Open questions for Danielle
+## Open questions — answered by Danielle, 2026-08-02
 
-1. **Digest delivery.** Card-only to start, as specified? Or is a real
-   notification the thing that would actually let you put the list down?
-2. **Default answer-by.** Is "tonight" right, or is it too tight for a first
-   run — would "tomorrow" get a better reception on the receiving end?
-3. **Hard-deadline cap of two.** Right number, or too austere for a household
-   with kids in it?
-4. **Who is "she" here.** The spec assumes the load-carrying partner is the one
-   asking. If asks flow both ways in practice, §1 and §3 need a second look —
-   most of it is symmetric already, but the copy isn't.
+1. **Digest delivery.** User's choice of in-app card or one daily notification,
+   **default card**. Prefs sync per person, not per device (see §4).
+2. **Default answer-by.** **Tonight** (20:00), rolling to tomorrow for asks
+   created after 18:00, overridable per ask — as originally specified.
+3. **Hard-deadline cap.** **Three** active per household, not two (§1 updated).
+4. **Direction of asks.** **Both ways.** The mechanics in §1–§3 are already
+   symmetric; the implementation must keep them so, and every piece of copy in
+   the ask lifecycle gets a neutral-direction pass — no wording that assumes a
+   fixed asker and a fixed answerer. The design rule stands for whoever is
+   carrying the load on any given ask.
