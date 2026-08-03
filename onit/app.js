@@ -217,7 +217,8 @@
     queue: load(KEY.queue, []),
     acting: load(KEY.acting, null),
     prefs: Object.assign(
-      { theme: 'system', sound: true, cap: 6, scope: 'everyone' },
+      { theme: 'system', sound: true, cap: 6, scope: 'everyone',
+        digest: false, digestAt: '07:30', digestSeen: null },
       load(KEY.prefs, {}),
     ),
     status: 'idle',          // idle | syncing | offline | error
@@ -226,6 +227,8 @@
     view: 'today',
     fit: null,               // minutes available, or null for "any length"
     showUndated: false,
+    showInbox: false,
+    oneSkip: [],             // "not this one" taps, this session only — never stored
     listFilter: { who: 'all', status: 'open' },
     setup: { screen: 'welcome', busy: false, error: null, peek: null, form: {} },
     sheet: null,
@@ -547,6 +550,34 @@
     snap.tasks.filter((t) => t.status === 'requested' && t.owner_id === myId(snap));
   const outgoingAsks = (snap) =>
     snap.tasks.filter((t) => t.status === 'requested' && t.owner_id !== myId(snap));
+
+  // Captured thoughts: no owner, no date. Deliberately neutral ground — an
+  // observation that hasn't been turned into a request aimed at anyone.
+  const inboxTasks = (snap) =>
+    snap.tasks.filter((t) => t.status === 'open' && !t.owner_id && !t.due_on);
+
+  /** One-thing-mode pool: my board for today, or the dateless pile if today is
+   *  clear. Deterministic order, so the same tap gives the same answer and it
+   *  feels like a decision rather than a shuffle. */
+  function oneCandidates(snap) {
+    const me = myId(snap);
+    const today = todayISO();
+    const mine = snap.tasks.filter((t) =>
+      t.status === 'open' && (!t.owner_id || t.owner_id === me));
+    const dated = mine.filter((t) => t.due_on && t.due_on <= today);
+    const pool = dated.length ? dated : mine.filter((t) => !t.due_on);
+    const rank = (t) => (
+      (t.hard_deadline ? 0 : 8) +                                   // v2 field; absent today
+      (t.matters ? 0 : 4) +
+      (t.due_on && t.due_on < today ? 0 : 2) +
+      (state.fit && t.est_minutes && t.est_minutes <= state.fit ? 0 : 1)
+    );
+    return pool.slice().sort((a, b) =>
+      rank(a) - rank(b)
+      || (a.est_minutes || 9999) - (b.est_minutes || 9999)
+      || String(a.created_at || '').localeCompare(String(b.created_at || ''))
+      || a.id.localeCompare(b.id));
+  }
 
   function completedOn(snap, iso) {
     return snap.tasks.filter((t) =>
@@ -970,8 +1001,12 @@
       items: shown.filter((t) => t.due_on === today && t.time_of_day === slot.id),
     })).filter((g) => g.items.length);
 
-    const undated = scopeFilter(snap, snap.tasks.filter((t) => t.status === 'open' && !t.due_on));
+    const inbox = inboxTasks(snap);
+    const undated = scopeFilter(snap,
+      snap.tasks.filter((t) => t.status === 'open' && !t.due_on && t.owner_id));
     const view = h('main', { class: 'view' });
+
+    add(view, digestCard(snap));
 
     add(view, [
       h('div', { class: 'view-head' },
@@ -1001,6 +1036,14 @@
         }, icon('clock', 14), `${m < 60 ? m + ' min' : '1 hr'}`)),
       ),
     ]);
+
+    // A list is a menu of things to fail at. The escape hatch is one card.
+    if (oneCandidates(snap).length) {
+      add(view, h('button', {
+        class: 'one-entry',
+        onclick: () => { state.oneSkip = []; state.view = 'one'; window.scrollTo(0, 0); render(); },
+      }, icon('play'), h('span', { text: 'Just give me one thing' })));
+    }
 
     if (!all.length) {
       add(view, emptyToday(snap, undated));
@@ -1033,6 +1076,18 @@
       }
     }
 
+    if (inbox.length) {
+      add(view, h('div', { class: 'section' },
+        h('button', {
+          class: 'btn btn-block',
+          onclick: () => { state.showInbox = !state.showInbox; render(); },
+          'aria-expanded': String(state.showInbox),
+        }, icon('inbox'), `Inbox · ${inbox.length} to sort`),
+        state.showInbox && h('div', { class: 'stack', style: 'margin-top:.6rem' },
+          inbox.map((t) => taskCard(snap, t))),
+      ));
+    }
+
     if (undated.length) {
       add(view, h('div', { class: 'section' },
         h('button', {
@@ -1048,6 +1103,55 @@
     return view;
   }
 
+  /* --------------------------------------------------------------- digest */
+
+  /** One card, once a day, at a time she picks. Generated entirely from the
+   *  snapshot already on the device — the replacement for the running audit in
+   *  her head, not another thing to check. */
+  function digestCard(snap) {
+    if (!state.prefs.digest || snap.me.kiosk) return null;
+    const today = todayISO();
+    if (state.prefs.digestSeen === today) return null;
+    const now = new Date();
+    if (`${pad(now.getHours())}:${pad(now.getMinutes())}` < (state.prefs.digestAt || '07:30')) return null;
+
+    const since = shiftISO(today, -1);
+    const finished = snap.tasks.filter((t) =>
+      t.status === 'done' && t.completed_at && t.completed_at.slice(0, 10) >= since);
+    const waiting = outgoingAsks(snap);
+    const moved = (snap.events || []).filter((e) =>
+      e.kind === 'deferred' && e.created_at && e.created_at.slice(0, 10) >= since);
+    const forMe = incomingAsks(snap).length;
+
+    const line = (ico, text) => h('div', { class: 'digest-line' }, icon(ico, 15), h('span', { text }));
+    const dismiss = () => {
+      state.prefs.digestSeen = today;
+      persistPrefs();
+      render();
+    };
+
+    return h('section', { class: 'digest', 'aria-label': 'Since yesterday' },
+      h('div', { class: 'digest-head' },
+        h('h2', { text: 'Since yesterday' }),
+        h('button', { class: 'icon-btn', onclick: dismiss, 'aria-label': 'Dismiss until tomorrow' }, icon('x')),
+      ),
+      finished.length > 0 && line('check',
+        `${finished.length} finished — ${finished.slice(0, 3).map((t) => t.title).join(', ')}${finished.length > 3 ? '…' : ''}`),
+      waiting.length > 0 && line('inbox',
+        `${waiting.length} still waiting on an answer`),
+      moved.length > 0 && line('calendar',
+        `${moved.length} moved to a new day`),
+      !finished.length && !waiting.length && !moved.length &&
+        line('moon', 'A quiet day. Nothing changed.'),
+      h('p', {
+        class: 'digest-close',
+        text: forMe > 0
+          ? `${forMe} ${forMe === 1 ? 'ask is' : 'asks are'} waiting on you.`
+          : 'Nothing needs you.',
+      }),
+    );
+  }
+
   function emptyToday(snap, undated) {
     const doneToday = completedOn(snap, todayISO()).length;
     if (doneToday) {
@@ -1058,15 +1162,20 @@
         h('button', { class: 'btn', onclick: () => { state.view = 'wins'; render(); } }, icon('heart'), 'See the wins'),
       );
     }
+    const loose = undated.length + inboxTasks(snap).length;
     return h('div', { class: 'empty' },
       h('div', { class: 'art' }, icon('sun')),
       h('h3', { text: 'Nothing on today' }),
       h('p', {
-        text: undated.length
-          ? `You have ${undated.length} ${undated.length === 1 ? 'item' : 'items'} with no date. Pull one in, or add something new.`
+        text: loose
+          ? `You have ${loose} ${loose === 1 ? 'item' : 'items'} with no date. Pull one in, or add something new.`
           : 'Add the first thing, or ask your partner for something.',
       }),
       h('button', { class: 'btn btn-primary', onclick: () => openTaskSheet(null) }, icon('plus'), 'Add something'),
+      oneCandidates(snap).length > 0 && h('button', {
+        class: 'btn',
+        onclick: () => { state.oneSkip = []; state.view = 'one'; window.scrollTo(0, 0); render(); },
+      }, icon('play'), 'Just give me one thing'),
     );
   }
 
@@ -1445,6 +1554,60 @@
   }
 
   /* ====================================================================== */
+  /*  One thing — the front door for days when the list is the problem      */
+  /* ====================================================================== */
+
+  function viewOne(snap) {
+    const view = h('main', { class: 'view one' });
+    const pool = oneCandidates(snap);
+    const task = pool.find((t) => !state.oneSkip.includes(t.id));
+    const leave = () => { state.view = 'today'; state.oneSkip = []; render(); };
+
+    add(view, h('button', { class: 'btn btn-ghost one-back', onclick: leave },
+      icon('x'), 'Back to the list'));
+
+    if (!task) {
+      add(view, h('div', { class: 'one-card' },
+        h('div', { class: 'art' }, icon('sparkle')),
+        h('h3', { text: pool.length ? "You've seen them all" : 'Nothing to pick from' }),
+        h('p', { class: 'sub', text: pool.length
+          ? 'Every card got a "not this one". Fair enough — go around again, or step away.'
+          : 'Nothing on your board right now.' }),
+        h('div', { class: 'one-row' },
+          pool.length > 0 && h('button', {
+            class: 'btn btn-primary', onclick: () => { state.oneSkip = []; render(); },
+          }, icon('undo'), 'Go around again'),
+          h('button', { class: 'btn', onclick: leave, text: 'Back to Today' }),
+        ),
+      ));
+      return view;
+    }
+
+    add(view, h('div', { class: 'one-card' },
+      h('div', { class: 'one-title', text: task.title }),
+      task.notes && h('p', { class: 'task-notes', text: task.notes }),
+      task.est_minutes && h('div', { class: 'one-est' }, icon('clock', 15), `~${minutesLabel(task.est_minutes)}`),
+      h('button', {
+        class: 'btn btn-primary one-start',
+        onclick: () => startFocus(task),
+      }, icon('play'), 'Start'),
+      h('div', { class: 'one-row' },
+        // Genuinely free: no record, no counter, nothing stored past this session.
+        h('button', {
+          class: 'btn', onclick: () => { state.oneSkip.push(task.id); render(); },
+          text: 'Not this one',
+        }),
+        h('button', {
+          class: 'btn',
+          onclick: () => { deferTask(task, 'tomorrow'); toast('Moved to tomorrow.'); render(); },
+          text: 'Later',
+        }),
+      ),
+    ));
+    return view;
+  }
+
+  /* ====================================================================== */
   /*  Sheets                                                                */
   /* ====================================================================== */
 
@@ -1475,6 +1638,65 @@
       h('div', { class: 'scrim', onclick: closeSheet }),
       panel,
     );
+  }
+
+  /* -------------------------------------------------------- quick capture */
+
+  /** One field, one button. The gap between "I should write that down" and it
+   *  being written down has to be under three seconds or the thought is gone.
+   *  Saves unowned and undated, into the Inbox — deciding who and when is a
+   *  different job for a different moment. Dictation comes free: the field is
+   *  focused on open, so the keyboard mic is one tap away. */
+  function openCaptureSheet() {
+    state.sheet = { kind: 'capture', title: '', error: null };
+    render();
+  }
+
+  function captureSheet() {
+    const snap = derive();
+    const s = state.sheet;
+
+    const submit = () => {
+      const title = (s.title || '').trim();
+      if (!title) { s.error = 'Write the thought first.'; state.sheet = { ...s }; render(); return; }
+      enqueue('task.save', {
+        task: {
+          id: uid(), title, notes: '', owner_id: null, due_on: null,
+          time_of_day: 'anytime', est_minutes: null, repeat_rule: 'none',
+          matters: false, steps: [],
+        },
+      });
+      closeSheet();
+      toast('In the Inbox. Sort it whenever.', 'ok');
+    };
+
+    const body = h('div', {},
+      h('label', { class: 'field' },
+        h('span', { class: 'label', text: 'Get it out of your head' }),
+        h('input', {
+          class: 'input input-lg', value: s.title, maxlength: 200,
+          placeholder: 'Gutter is dripping again',
+          'aria-invalid': String(!!s.error),
+          oninput: (e) => { s.title = e.target.value; },
+          onkeydown: (e) => { if (e.key === 'Enter') submit(); },
+        }),
+        s.error && h('span', { class: 'error-text' }, icon('alert', 14), s.error),
+        h('span', { class: 'hint', text: 'No owner, no date. It lands in the Inbox and nobody is on the hook yet.' }),
+      ),
+    );
+
+    return sheet('Add something', body, [
+      h('button', {
+        class: 'btn', text: 'More options',
+        onclick: () => {
+          const title = s.title || '';
+          openTaskSheet(null);
+          state.sheet.draft.title = title;
+          render();
+        },
+      }),
+      h('button', { class: 'btn btn-primary', onclick: submit, text: 'Add it' }),
+    ]);
   }
 
   /* --------------------------------------------------------- add / edit  */
@@ -2068,6 +2290,26 @@
         ),
       ),
 
+      !snap.me.kiosk && h('div', { class: 'sheet-section' },
+        h('h3', { text: 'Morning digest' }),
+        toggle('One summary card, once a day', 'What got done, what moved, and whether anything needs you — at the top of Today, then gone until tomorrow. No notifications.',
+          !!state.prefs.digest, () => {
+            state.prefs.digest = !state.prefs.digest;
+            state.prefs.digestSeen = null;
+            persistPrefs(); rerender();
+          }),
+        state.prefs.digest && h('label', { class: 'field', style: 'margin-top:1rem' },
+          h('span', { class: 'label', text: 'Show it after' }),
+          h('input', {
+            type: 'time', class: 'input', value: state.prefs.digestAt || '07:30',
+            onchange: (e) => {
+              state.prefs.digestAt = e.target.value || '07:30';
+              persistPrefs();
+            },
+          }),
+        ),
+      ),
+
       h('div', { class: 'sheet-section' },
         h('h3', { text: 'Sync' }),
         h('div', { class: 'notice' },
@@ -2214,7 +2456,7 @@
     } else {
       const snap = derive();
       const app = h('div', { class: 'app' });
-      const views = { today: viewToday, asks: viewAsks, all: viewAll, wins: viewWins };
+      const views = { today: viewToday, asks: viewAsks, all: viewAll, wins: viewWins, one: viewOne };
       add(app, [
         topbar(snap),
         snap.me.kiosk && kioskClock(),
@@ -2222,14 +2464,18 @@
         nav(snap),
       ]);
       frag.append(app);
-      frag.append(h('button', {
-        class: 'fab', onclick: () => openTaskSheet(null), 'aria-label': 'Add something',
-      }, icon('plus'), h('span', { text: 'Add' })));
+      // The fast path on purpose: capture first, details only if wanted.
+      if (state.view !== 'one') {
+        frag.append(h('button', {
+          class: 'fab', onclick: () => openCaptureSheet(), 'aria-label': 'Add something',
+        }, icon('plus'), h('span', { text: 'Add' })));
+      }
 
       if (state.sheet) {
         const sheets = {
           task: taskSheet, detail: detailSheet, settings: settingsSheet,
           person: personSheet, accept: acceptSheet, decline: declineSheet, thanks: thanksSheet,
+          capture: captureSheet,
         };
         const build = sheets[state.sheet.kind];
         if (build) frag.append(build());

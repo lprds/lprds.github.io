@@ -6,9 +6,9 @@
    .app
      ├ .topbar        household, acting-as switcher, sync state, settings
      ├ .kiosk-clock   (kiosk only) time + date, readable across a room
-     ├ .view          Today | Asks | Everything | Wins
+     ├ .view          Today | Asks | Everything | Wins | One thing
      ├ .nav           bottom tabs on phones, left rail from 860px up
-     └ .sheet         add / detail / settings / accept overlays
+     └ .sheet         capture / add / detail / settings / accept overlays
    ========================================================================== */
 
 :root {
@@ -1170,6 +1170,130 @@ body[data-kiosk="on"] .view-head .sub { display: none; }
 .swatch:hover { transform: scale(1.08); }
 .swatch:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring); }
 .swatch[aria-pressed="true"] { border-color: var(--text); transform: scale(1.08); }
+
+/* ----------------------------------------------------------------- digest */
+/* One card, once a day. Warm and quiet — a note left on the counter, not a
+   report. Dismissed, it stays gone until tomorrow. */
+
+.digest {
+  margin-bottom: 1.2rem;
+  padding: .9rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  border-radius: var(--r-lg);
+  background: var(--primary-soft);
+  box-shadow: var(--shadow-sm);
+}
+.digest-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: .35rem;
+}
+.digest-head h2 {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+.digest-line {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  padding: .18rem 0;
+  font-size: .89rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+.digest-line svg { flex: none; margin-top: .22rem; color: var(--primary); }
+.digest-close {
+  margin: .55rem 0 0;
+  font-size: .95rem;
+  font-weight: 650;
+  color: var(--primary);
+}
+
+/* -------------------------------------------------------------- one thing */
+/* The right number of visible items when starting is hard is one. */
+
+.one-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  width: 100%;
+  min-height: 54px;
+  margin-top: 1rem;
+  padding: .8rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--primary);
+  font-size: 1rem;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background .15s var(--ease), transform .12s var(--ease);
+}
+.one-entry:hover { background: var(--primary-soft); }
+.one-entry:active { transform: scale(.98); }
+.one-entry:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring); }
+.one-entry svg { width: 20px; height: 20px; }
+
+.view.one {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.one-back { align-self: flex-start; margin-bottom: 1.2rem; }
+.one-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .9rem;
+  width: min(440px, 100%);
+  margin-top: 6vh;
+  padding: 2.2rem 1.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+.one-card .art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.one-card .art svg { width: 30px; height: 30px; }
+.one-card h3 { font-family: var(--display); font-size: 1.3rem; font-weight: 600; }
+.one-card .sub { margin: 0; max-width: 32ch; color: var(--muted); font-size: .9rem; line-height: 1.55; }
+.one-title {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 5vw, 1.9rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -.01em;
+}
+.one-est {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  color: var(--muted);
+  font-size: .92rem;
+  font-weight: 600;
+}
+.one-start {
+  min-height: 58px;
+  width: min(240px, 100%);
+  font-size: 1.1rem;
+  border-radius: var(--r-lg);
+}
+.one-row { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
 
 .sr-only {
   position: absolute;
