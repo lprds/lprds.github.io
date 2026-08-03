@@ -1,6 +1,12 @@
 # On It v2 — The Middle
 
-A build spec for the next release. Nothing here is implemented yet.
+A build spec for the next release.
+
+**Status (2026-08-02):** Phase 1 (§4–§6) shipped to main. Phase 2 (§1–§3)
+built: migration applied, api v3 deployed, pg_cron resurface job live,
+client on branch. One deferral: the interactive swap picker in §2 — the
+"swap" route parks the item in the pile with a "wants to swap" label; the
+actual trade is arranged by the humans (or a v2.1 picker).
 
 ---
 

@@ -6,7 +6,7 @@
  * where the client's own mutation queue handles being offline.
  */
 
-const VERSION = 'onit-v4';
+const VERSION = 'onit-v5';
 const SHELL = [
   './',
   './index.html',

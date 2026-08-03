@@ -209,6 +209,31 @@
     return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
+  /** 8pm on a given local day, as an ISO timestamp for answer_by. */
+  function eightPm(dayOffset) {
+    const d = new Date();
+    d.setDate(d.getDate() + dayOffset);
+    d.setHours(20, 0, 0, 0);
+    return d.toISOString();
+  }
+
+  /** Default reply-by: tonight at 8 — unless it's already evening, then
+   *  tomorrow. The deadline is on the answer, never the work. */
+  function answerByDefault() {
+    return eightPm(new Date().getHours() >= 18 ? 1 : 0);
+  }
+
+  function answerByLabel(ts) {
+    if (!ts) return null;
+    const d = new Date(ts);
+    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const diff = daysBetween(todayISO(), day);
+    if (diff <= 0) return 'tonight';
+    if (diff === 1) return 'tomorrow';
+    if (diff < 7) return `by ${d.toLocaleDateString(undefined, { weekday: 'long' })}`;
+    return `by ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`;
+  }
+
   /* ---------------------------------------------------------------- state */
 
   const state = {
@@ -441,6 +466,31 @@
         case 'task.decline':
           if (t) Object.assign(t, { status: 'declined', decline_reason: payload.reason || null });
           break;
+        case 'task.seen':
+          if (t && !t.seen_at) t.seen_at = new Date().toISOString();
+          break;
+        case 'task.renegotiate':
+          if (t) Object.assign(t, {
+            status: 'renegotiate',
+            renegotiate_route: payload.route,
+            renegotiate_note: payload.note || null,
+          });
+          break;
+        case 'task.resolve':
+          if (t) {
+            if (payload.outcome === 'taken_back') {
+              Object.assign(t, {
+                status: 'open', owner_id: meId, outcome: 'taken_back',
+                decline_reason: null, renegotiate_route: null, renegotiate_note: null,
+                drop_proposed_by: null, drop_agreed_by: null,
+              });
+            } else if (payload.outcome === 'dropped' && !t.drop_proposed_by) {
+              t.drop_proposed_by = meId;
+            } else {
+              Object.assign(t, { status: 'archived', outcome: payload.outcome });
+            }
+          }
+          break;
         case 'task.defer':
           if (t) Object.assign(t, {
             due_on: payload.to === 'someday' ? null : payload.to,
@@ -527,6 +577,15 @@
 
   const isLive = (t) => t.status === 'open' || t.status === 'requested';
 
+  /** Plain countdown for the hard-deadline lane. No red, no siren (§1). */
+  function deadlineCountdown(deadlineOn) {
+    const diff = daysBetween(todayISO(), deadlineOn);
+    if (diff < 0) return `deadline was ${humanDay(deadlineOn)}`;
+    if (diff === 0) return 'deadline today';
+    if (diff === 1) return 'deadline tomorrow';
+    return `${diff} days`;
+  }
+
   function todayTasks(snap) {
     const today = todayISO();
     return snap.tasks.filter((t) =>
@@ -555,6 +614,28 @@
   // observation that hasn't been turned into a request aimed at anyone.
   const inboxTasks = (snap) =>
     snap.tasks.filter((t) => t.status === 'open' && !t.owner_id && !t.due_on);
+
+  // "Needs another plan": everything answered with a no or a not-me, uncapped,
+  // each with a visible way out. Nothing in here has fallen through a crack.
+  const pileTasks = (snap) =>
+    snap.tasks.filter((t) => t.status === 'declined' || t.status === 'renegotiate');
+
+  /** Reply-by has passed, or the server already re-asked. Renders the same
+   *  whether or not the cron has run yet, so an open phone at 8:01 is right. */
+  const answerOverdue = (t) =>
+    (t.resurface_count || 0) > 0 ||
+    (t.answer_by && new Date(t.answer_by).getTime() < Date.now());
+
+  // task.seen fires once per ask, on the first render on the owner's device.
+  // Same shape as the kudos.seen pattern in viewWins: deferred past the render,
+  // with the optimistic derive() case stopping any re-queue.
+  const seenFired = new Set();
+  function fireSeen(tasks) {
+    const fresh = tasks.filter((t) => !t.seen_at && !seenFired.has(t.id));
+    if (!fresh.length) return;
+    fresh.forEach((t) => seenFired.add(t.id));
+    setTimeout(() => fresh.forEach((t) => enqueue('task.seen', { id: t.id })), 600);
+  }
 
   /** One-thing-mode pool: my board for today, or the dateless pile if today is
    *  clear. Deterministic order, so the same tap gives the same answer and it
@@ -954,7 +1035,9 @@
   }
 
   function nav(snap) {
-    const asks = incomingAsks(snap).length;
+    // Waiting-on-you plus the unresolved pile: both are shared state worth a
+    // glance, and neither is aimed at one person.
+    const asks = incomingAsks(snap).length + pileTasks(snap).length;
     const unseenKudos = snap.kudos.filter((k) => k.to_member === myId(snap) && !k.seen_at).length;
     const tabs = [
       { id: 'today', label: 'Today', ico: 'sun' },
@@ -1043,6 +1126,26 @@
         class: 'one-entry',
         onclick: () => { state.oneSkip = []; state.view = 'one'; window.scrollTo(0, 0); render(); },
       }, icon('play'), h('span', { text: 'Just give me one thing' })));
+    }
+
+    // §1 rung 2: the reply-by passed, so the ask pins here. One thing, two
+    // buttons, not a list. Answering (any answer) makes it go away.
+    const reAsk = incomingAsks(snap).filter(answerOverdue)[0];
+    if (reAsk) {
+      add(view, h('section', { class: 'pinned-ask' },
+        h('div', { class: 'from' },
+          h('span', { text: `${nameOf(snap, reAsk.requested_by)} is waiting on an answer. A no counts.` })),
+        h('div', { class: 'ask-title', text: reAsk.title }),
+        h('div', { class: 'ask-actions' },
+          h('button', {
+            class: 'btn btn-primary', onclick: () => openAcceptSheet(reAsk.id),
+          }, icon('check'), "Yes, I'll pick a time"),
+          h('button', {
+            class: 'btn', onclick: () => openAnswersSheet(reAsk.id),
+            text: 'Another answer',
+          }),
+        ),
+      ));
     }
 
     if (!all.length) {
@@ -1233,6 +1336,8 @@
             h('span', { class: 'badge badge-warn' }, icon('calendar'), `from ${humanDay(task.due_on)}`),
           task.repeat_rule !== 'none' && h('span', { class: 'badge' }, icon('repeat'),
             REPEATS.find((r) => r.id === task.repeat_rule)?.label.replace('Every ', 'every ') || 'repeats'),
+          task.hard_deadline && task.deadline_on && !done &&
+            h('span', { class: 'badge' }, icon('calendar'), deadlineCountdown(task.deadline_on)),
           steps.length > 0 && h('span', { class: 'badge' }, icon('split'), `${doneSteps}/${steps.length}`),
           nudgedRecently && !done && h('span', { class: 'badge badge-clay' }, icon('flag'), 'Flagged'),
           task.requested_by && task.requested_by !== me &&
@@ -1276,7 +1381,10 @@
   function viewAsks(snap) {
     const incoming = incomingAsks(snap);
     const outgoing = outgoingAsks(snap);
-    const declined = snap.tasks.filter((t) => t.status === 'declined').slice(0, 10);
+    const pile = pileTasks(snap);
+
+    // First render on the owner's device is what "seen" means (§1 rung 1).
+    fireSeen(incoming);
 
     const view = h('main', { class: 'view' });
     add(view, h('div', { class: 'view-head' },
@@ -1286,7 +1394,7 @@
       ),
     ));
 
-    if (!incoming.length && !outgoing.length && !declined.length) {
+    if (!incoming.length && !outgoing.length && !pile.length) {
       add(view, h('div', { class: 'empty' },
         h('div', { class: 'art' }, icon('inbox')),
         h('h3', { text: 'No open asks' }),
@@ -1304,25 +1412,101 @@
       add(view, section('You asked for', outgoing.length,
         outgoing.map((t) => askCard(snap, t, false))));
     }
-    if (declined.length) {
-      add(view, section('Declined', declined.length,
-        declined.map((t) => h('article', { class: 'task', dataset: { done: 'true' } },
-          h('div', { class: 'task-body' },
-            h('div', { class: 'task-title', text: t.title }),
-            h('div', { class: 'task-meta' },
-              h('span', { class: 'badge' }, `${nameOf(snap, t.owner_id)} passed`),
-              t.decline_reason && h('span', { class: 'badge', text: t.decline_reason }),
-            ),
-          ),
-          h('div', { class: 'task-actions' },
-            h('button', {
-              class: 'icon-btn', 'aria-label': 'Put back on the list',
-              onclick: () => enqueue('task.reopen', { id: t.id }),
-            }, icon('undo')),
-          ),
-        ))));
+    if (pile.length) {
+      add(view, h('p', { class: 'sub', style: 'margin-top:1.4rem;color:var(--muted)',
+        text: 'Answered with a no or a not-me. Each one gets a real way out, and dropping something takes both of you.' }));
+      add(view, section('Needs another plan', pile.length,
+        pile.map((t) => pileCard(snap, t))));
     }
     return view;
+  }
+
+  const ROUTE_LABELS = {
+    swap: 'wants to swap for something',
+    pay: 'suggests paying someone',
+    drop: 'proposes not doing it',
+    talk: 'wants to talk it over',
+  };
+
+  function pileCard(snap, task) {
+    const me = myId(snap);
+    const declinedBy = nameOf(snap, task.owner_id);
+    const proposedByMe = task.drop_proposed_by === me;
+
+    return h('article', { class: 'ask pile-item' },
+      h('div', { class: 'ask-title', text: task.title }),
+      h('div', { class: 'task-meta' },
+        task.status === 'declined'
+          ? h('span', { class: 'badge' }, `${declinedBy} passed`)
+          : h('span', { class: 'badge' }, `${declinedBy} ${ROUTE_LABELS[task.renegotiate_route] || 'wants another plan'}`),
+        (task.decline_reason || task.renegotiate_note) &&
+          h('span', { class: 'badge', text: task.decline_reason || task.renegotiate_note }),
+        task.drop_proposed_by && h('span', { class: 'badge badge-clay' },
+          proposedByMe ? 'you proposed letting it go' : `${nameOf(snap, task.drop_proposed_by)} proposed letting it go`),
+      ),
+      h('div', { class: 'ask-actions' },
+        h('button', {
+          class: 'btn btn-sm',
+          onclick: () => { enqueue('task.resolve', { id: task.id, outcome: 'taken_back' }); toast("It's yours now.", 'ok'); },
+          text: "I'll take it",
+        }),
+        h('button', {
+          class: 'btn btn-sm',
+          onclick: () => { enqueue('task.resolve', { id: task.id, outcome: 'outsourced' }); toast('Closed. Someone else is doing it.', 'ok'); },
+          text: "We're paying someone",
+        }),
+        task.drop_proposed_by
+          ? h('button', {
+              class: 'btn btn-sm', 'aria-disabled': String(proposedByMe),
+              onclick: () => {
+                if (proposedByMe) { toast('It takes both of you. Waiting on the other yes.'); return; }
+                enqueue('task.resolve', { id: task.id, outcome: 'dropped' });
+                toast('Agreed. It goes, and nothing fell through a crack.', 'ok');
+              },
+            }, proposedByMe ? 'Waiting on their agree' : 'Agree, let it go')
+          : h('button', {
+              class: 'btn btn-sm',
+              onclick: () => {
+                enqueue('task.resolve', { id: task.id, outcome: 'dropped' });
+                toast('Proposed. It only drops when the other person agrees too.');
+              },
+              text: 'Propose letting it go',
+            }),
+        h('button', {
+          class: 'btn btn-sm',
+          onclick: () => { enqueue('task.reopen', { id: task.id }); toast('Back on the list.'); },
+        }, icon('undo'), 'Put it back'),
+      ),
+    );
+  }
+
+  /** §1's ladder, rendered on the asking side. Board state, never a message,
+   *  and nothing here requires the asker to act. Reassurance, not evidence. */
+  function ladderLine(task) {
+    if ((task.resurface_count || 0) > 0) {
+      return `No answer yet. On It re-asked ${agoLabel(task.resurfaced_at)}.`;
+    }
+    if (task.seen_at) return `Seen ${agoLabel(task.seen_at)}.`;
+    if (task.answer_by) return `Waiting on an answer ${answerByLabel(task.answer_by)}. On It will follow up.`;
+    return null;
+  }
+
+  function talkNotice(task) {
+    if ((task.resurface_count || 0) < 2) return null;
+    const days = Math.max(1, daysBetween(task.created_at.slice(0, 10), todayISO()));
+    return h('div', { class: 'notice', style: 'margin-top:.6rem' },
+      icon('alert'),
+      h('span', { text: `This one's been sitting ${days === 1 ? 'a day' : days + ' days'}. Two minutes of talking beats another re-ask.` }),
+    );
+  }
+
+  function acceptLater(snap, task) {
+    enqueue('task.accept', {
+      id: task.id, due_on: shiftISO(todayISO(), 7),
+      time_of_day: task.time_of_day || 'anytime', est_minutes: task.est_minutes,
+      later: true,
+    });
+    toast('Agreed for next week. That counts as an answer.', 'ok');
   }
 
   function askCard(snap, task, mine) {
@@ -1342,7 +1526,13 @@
       h('div', { class: 'task-meta' },
         task.est_minutes && h('span', { class: 'badge' }, icon('clock'), minutesLabel(task.est_minutes)),
         task.matters && h('span', { class: 'badge badge-clay' }, 'matters a lot to them'),
+        mine && task.answer_by && h('span', { class: 'badge' }, icon('clock'),
+          `answer ${answerByLabel(task.answer_by)}`),
+        task.hard_deadline && task.deadline_on && h('span', { class: 'badge' }, icon('calendar'),
+          deadlineCountdown(task.deadline_on)),
       ),
+      !mine && ladderLine(task) && h('p', { class: 'ask-status', text: ladderLine(task) }),
+      talkNotice(task),
     ]);
 
     if (mine) {
@@ -1350,6 +1540,14 @@
         h('button', {
           class: 'btn btn-primary', onclick: () => openAcceptSheet(task.id),
         }, icon('check'), "Yes, I'll pick a time"),
+        h('button', {
+          class: 'btn', onclick: () => acceptLater(snap, task),
+          text: 'Yes, but not this week',
+        }),
+        h('button', {
+          class: 'btn', onclick: () => openRenegotiateSheet(task.id),
+          text: "Not me. Let's find another way",
+        }),
         h('button', {
           class: 'btn', onclick: () => openDeclineSheet(task.id),
         }, 'Not this one'),
@@ -1712,10 +1910,15 @@
         time_of_day: existing.time_of_day, est_minutes: existing.est_minutes,
         repeat_rule: existing.repeat_rule, matters: existing.matters,
         steps: (existing.steps || []).map((s) => ({ ...s })),
+        // answerChip null = leave the stored answer_by exactly as it is
+        answerChip: null,
+        hard_deadline: !!existing.hard_deadline, deadline_on: existing.deadline_on || null,
       } : {
         id: uid(), title: '', notes: '', owner_id: myId(snap), due_on: todayISO(),
         time_of_day: 'anytime', est_minutes: null, repeat_rule: 'none',
         matters: false, steps: [],
+        answerChip: 'tonight',
+        hard_deadline: false, deadline_on: null,
       },
       editing: !!existing,
       error: null,
@@ -1842,6 +2045,18 @@
         }),
       ),
 
+      isAsk && h('div', { class: 'field' },
+        h('span', { class: 'label', text: 'When do you need an answer?' }),
+        h('div', { class: 'chip-row' },
+          [['tonight', 'Tonight'], ['tomorrow', 'Tomorrow'], ['thisweek', 'This week'], ['norush', 'No rush']]
+            .map(([id, label]) => h('button', {
+              type: 'button', class: 'chip', 'aria-pressed': String(d.answerChip === id),
+              onclick: () => { d.answerChip = id; rerender(); }, text: label,
+            })),
+        ),
+        h('span', { class: 'hint', text: 'The clock is on the reply, not the work. If it goes quiet, On It re-asks so neither of you has to.' }),
+      ),
+
       isAsk && h('button', {
         type: 'button', class: 'switch', role: 'switch', 'aria-checked': String(!!d.matters),
         onclick: () => { d.matters = !d.matters; rerender(); },
@@ -1852,6 +2067,24 @@
         ),
         h('span', { class: 'switch-track' }, h('span', { class: 'switch-thumb' })),
       ),
+
+      h('button', {
+        type: 'button', class: 'switch', role: 'switch', 'aria-checked': String(!!d.hard_deadline),
+        onclick: () => { d.hard_deadline = !d.hard_deadline; rerender(); },
+      },
+        h('span', {},
+          h('span', { class: 'switch-text', text: 'This one has a real deadline' }),
+          h('span', { class: 'switch-sub', text: 'The school form, the DMV, the late fee. Three at a time for the whole household, so it keeps meaning something.' }),
+        ),
+        h('span', { class: 'switch-track' }, h('span', { class: 'switch-thumb' })),
+      ),
+      d.hard_deadline && h('label', { class: 'field' },
+        h('span', { class: 'label', text: 'Deadline date' }),
+        h('input', {
+          type: 'date', class: 'input', value: d.deadline_on || '',
+          oninput: (e) => { d.deadline_on = e.target.value || null; },
+        }),
+      ),
     );
 
     const submit = () => {
@@ -1861,9 +2094,26 @@
         rerender();
         return;
       }
-      enqueue('task.save', {
-        task: { ...d, title, steps: d.steps.filter((st) => st.text.trim()) },
-      });
+      // The cap is the feature: the lane only means something while it's scarce.
+      if (d.hard_deadline && !original?.hard_deadline) {
+        const active = snap.tasks.filter((t) =>
+          t.hard_deadline && t.id !== d.id && isLive(t)).length;
+        if (active >= 3) {
+          s.error = "You've got 3 already. Which one stops being a hard deadline?";
+          rerender();
+          return;
+        }
+      }
+      const task = { ...d, title, steps: d.steps.filter((st) => st.text.trim()) };
+      delete task.answerChip;
+      if (isAsk && d.answerChip) {
+        task.answer_by =
+          d.answerChip === 'norush' ? null
+          : d.answerChip === 'tomorrow' ? eightPm(1)
+          : d.answerChip === 'thisweek' ? eightPm(5)
+          : answerByDefault();
+      }
+      enqueue('task.save', { task });
       closeSheet();
       toast(reassigning ? `Asked ${nameOf(snap, d.owner_id)}.` : (s.editing ? 'Saved.' : 'Added.'), 'ok');
     };
@@ -2004,6 +2254,98 @@
     ]);
   }
 
+  /* ---------------------------------------------------- renegotiate (§2)  */
+
+  function openRenegotiateSheet(taskId) {
+    state.sheet = { kind: 'renegotiate', taskId, note: '' };
+    render();
+  }
+
+  function renegotiateSheet() {
+    const snap = derive();
+    const s = state.sheet;
+    const task = snap.tasks.find((t) => t.id === s.taskId);
+    // Clear directly rather than via closeSheet(): this runs *inside* render.
+    if (!task) { state.sheet = null; return document.createDocumentFragment(); }
+
+    const answer = (route, label) => {
+      enqueue('task.renegotiate', { id: task.id, route, note: s.note });
+      closeSheet();
+      toast(`Answered: ${label}. It moved to "Needs another plan".`, 'ok');
+    };
+
+    const routeRow = (route, title, sub) => h('button', {
+      class: 'list-row', type: 'button', onclick: () => answer(route, title),
+    },
+      h('span', { class: 'grow' },
+        h('span', { class: 't', text: title }),
+        h('span', { class: 's', text: sub }),
+      ),
+      icon('chevron', 16),
+    );
+
+    const body = h('div', {},
+      h('p', { class: 'lede', style: 'margin-top:0;color:var(--muted)',
+        text: 'A cheap, honest "not me" is worth ten quiet yeses. Pick the route that fits. Nothing disappears until you both agree it should.' }),
+      h('div', { class: 'ask', style: 'margin-bottom:1.2rem' },
+        h('div', { class: 'ask-title', text: task.title })),
+      routeRow('swap', 'Can we swap?', 'Trade it for something on the other list.'),
+      routeRow('pay', 'Can we pay someone?', 'Make it a money conversation instead of a labour one.'),
+      routeRow('drop', 'Can we just not?', 'Propose dropping it. It only goes if you both agree.'),
+      routeRow('talk', 'Can we talk about it?', 'Park it for the next check-in.'),
+      h('label', { class: 'field', style: 'margin-top:1rem' },
+        h('span', { class: 'label', text: 'Anything to add? (optional)' }),
+        h('input', {
+          class: 'input', maxlength: 300, placeholder: 'I always end up doing this one',
+          oninput: (e) => { s.note = e.target.value; },
+        }),
+      ),
+    );
+
+    return sheet("Not me. Let's find another way", body, [
+      h('button', { class: 'btn', onclick: closeSheet, text: 'Back' }),
+    ]);
+  }
+
+  /** The compressed answer menu behind the pinned re-ask card's second button. */
+  function openAnswersSheet(taskId) { state.sheet = { kind: 'answers', taskId }; render(); }
+
+  function answersSheet() {
+    const snap = derive();
+    const s = state.sheet;
+    const task = snap.tasks.find((t) => t.id === s.taskId);
+    // Clear directly rather than via closeSheet(): this runs *inside* render.
+    if (!task) { state.sheet = null; return document.createDocumentFragment(); }
+
+    const row = (title, sub, run) => h('button', {
+      class: 'list-row', type: 'button', onclick: run,
+    },
+      h('span', { class: 'grow' },
+        h('span', { class: 't', text: title }),
+        h('span', { class: 's', text: sub }),
+      ),
+      icon('chevron', 16),
+    );
+
+    const body = h('div', {},
+      h('div', { class: 'ask', style: 'margin-bottom:1.2rem' },
+        h('div', { class: 'ask-title', text: task.title })),
+      row('Yes, but not this week', 'Agree now, land it next week.', () => {
+        closeSheet(); acceptLater(snap, task);
+      }),
+      row("Not me. Let's find another way", 'Swap it, pay someone, drop it, or talk it over.', () => {
+        closeSheet(); openRenegotiateSheet(task.id);
+      }),
+      row('Not this one', 'A real no, with a line about why.', () => {
+        closeSheet(); openDeclineSheet(task.id);
+      }),
+    );
+
+    return sheet('Answer it', body, [
+      h('button', { class: 'btn', onclick: closeSheet, text: 'Back' }),
+    ]);
+  }
+
   /* --------------------------------------------------------- task detail */
 
   function openDetail(taskId) { state.sheet = { kind: 'detail', taskId }; render(); }
@@ -2091,6 +2433,15 @@
       case 'nudged': return `${who} flagged it`;
       case 'thanked': return `${who} said thanks`;
       case 'edited': return `${who} edited it`;
+      case 'seen': return `${who} saw it`;
+      case 'resurfaced': return 'On It re-asked';
+      case 'deadline_set': return `${who} marked a real deadline${e.detail?.deadline_on ? ` for ${humanDay(e.detail.deadline_on)}` : ''}`;
+      case 'accepted_later': return `${who} agreed for later${e.detail?.due_on ? ` (${humanDay(e.detail.due_on)})` : ''}`;
+      case 'renegotiated': return `${who} asked to find another way`;
+      case 'drop_proposed': return `${who} proposed letting it go`;
+      case 'resolved': return e.detail?.outcome === 'dropped' ? 'both agreed to let it go'
+        : e.detail?.outcome === 'outsourced' ? 'closed: paying someone'
+        : `${who} took it back`;
       default: return `${who}: ${e.kind}`;
     }
   }
@@ -2475,7 +2826,7 @@
         const sheets = {
           task: taskSheet, detail: detailSheet, settings: settingsSheet,
           person: personSheet, accept: acceptSheet, decline: declineSheet, thanks: thanksSheet,
-          capture: captureSheet,
+          capture: captureSheet, renegotiate: renegotiateSheet, answers: answersSheet,
         };
         const build = sheets[state.sheet.kind];
         if (build) frag.append(build());

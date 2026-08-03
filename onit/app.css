@@ -1171,6 +1171,44 @@ body[data-kiosk="on"] .view-head .sub { display: none; }
 .swatch:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ring); }
 .swatch[aria-pressed="true"] { border-color: var(--text); transform: scale(1.08); }
 
+/* ----------------------------------------------------- ask lifecycle (v2) */
+/* The ladder is quiet prose on the card, never a countdown or a red anything.
+   The pinned re-ask is one question with two buttons, not a list. */
+
+.ask-status {
+  margin: .55rem 0 0;
+  font-size: .85rem;
+  font-weight: 550;
+  color: var(--primary);
+}
+
+.pinned-ask {
+  margin: 1rem 0 .2rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--clay) 35%, var(--border));
+  border-radius: var(--r-lg);
+  background: var(--clay-soft);
+  box-shadow: var(--shadow-sm);
+}
+.pinned-ask .from {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--clay);
+  margin-bottom: .35rem;
+}
+.pinned-ask .ask-title {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: .7rem;
+}
+.pinned-ask .ask-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+.pile-item .ask-actions { flex-wrap: wrap; }
+
 /* ----------------------------------------------------------------- digest */
 /* One card, once a day. Warm and quiet — a note left on the counter, not a
    report. Dismissed, it stays gone until tomorrow. */
